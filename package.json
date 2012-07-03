@@ -1,0 +1,43 @@
+{
+  "name": "payswarm",
+  "version": "0.0.0",
+  "description": "PaySwarm authority interface library.",
+  "homepage": "http://github.com/digitalbazaar/payswarm.js",
+  "license": "BSD",
+  "main": "lib/payswarm.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/digitalbazaar/payswarm.js"
+  },
+  "keywords": [
+    "payswarm",
+    "payments"
+  ],
+  "author": {
+    "name" : "Digital Bazaar, Inc.",
+    "email" : "support@digitalbazaar.com",
+    "url" : "http://digitalbazaar.com/"
+  },
+  "contributors": [{
+    "name" : "Dave Longley",
+    "email" : "dlongley@digitalbazaar.com"
+  }],
+  "bugs": {
+    "url": "https://github.com/digitalbazaar/payswarm.js/issues",
+    "email": "support@digitalbazaar.com"
+  },
+  "dependencies": {
+    "async": "~0.1.22",
+    "crypto": "~0.0.3",
+    "node-forge": "git://github.com/digitalbazaar/forge.git",
+    "jsonld": "git://github.com/digitalbazaar/jsonld.js.git",
+    "request": "~2.9.202",
+    "url": ""
+  },
+  "engines": {
+    "node": "*"
+  }
+}
