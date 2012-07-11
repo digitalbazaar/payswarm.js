@@ -31,11 +31,9 @@
   },
   "dependencies": {
     "async": "~0.1.22",
-    "crypto": "~0.0.3",
     "node-forge": "git://github.com/digitalbazaar/forge.git",
     "jsonld": "git://github.com/digitalbazaar/jsonld.js.git",
-    "request": "~2.9.202",
-    "url": ""
+    "request": "~2.9.202"
   },
   "engines": {
     "node": "*"
