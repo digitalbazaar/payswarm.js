@@ -35,6 +35,9 @@
     "jsonld": "git://github.com/digitalbazaar/jsonld.js.git",
     "request": "~2.9.202"
   },
+  "devDependencies": {
+    "commander": "~0.6.1"
+  },
   "engines": {
     "node": "*"
   }
