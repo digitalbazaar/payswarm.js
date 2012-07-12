@@ -38,7 +38,7 @@ var program = require('commander');
 var payswarm = require('../lib/payswarm-client.js');
 var path = require('path');
 var fs = require('fs');
-var querystring = require('querystring');
+var URL = require('url');
 
 var keyRegistration = {};
 
@@ -68,50 +68,32 @@ keyRegistration.run = function() {
    */
   async.waterfall([
     function(callback) {
-      // check to see if the public key PEM file exists
-      path.exists(publicKeyPemFile, function(exists) {
-        callback(null, exists);
-      });
-    },
-    function(exists, callback) {
-      // if the public key file exists, use the contents - if not, generate keys
-      if(exists) {
-        // get information on the public key file
-        fs.stat(publicKeyPemFile, function(err, stats) {
-          if(err) {
-            callback(err);
-          }
-          if(stats.isFile()) {
-            // get the data in the public key file
-            fs.readFile(publicKeyPemFile, 'utf8', function(err, data) {
-              if(err) {
-                return callback(err);
-              }
-
-              // format the public key data for the next step in the process
-              console.log('Reading existing public key from ' +
-                publicKeyPemFile);
-              var pair = {};
-              pair.publicKey = data;
-              callback(null, pair, false);
+      // get the data in the public key file
+      fs.readFile(publicKeyPemFile, 'utf8', function(err, data) {
+        if(err) {
+          // file does not exist error
+          if(err.code === 'ENOENT') {
+            // public key doesn't exist, generate a new keypair
+            return payswarm.createKeyPair({keySize: 512}, function(err, pair) {
+              callback(err, pair, true);
             });
           }
-        });
-      }
-      else {
-        // generate a new public/private keypair
-        payswarm.createKeyPair({keySize: 512}, function(err, pair) {
-          callback(err, pair, true);
-        });
-      }
+          return callback(err);
+        }
+
+        // format the public key data for the next step in the process
+        console.log('Reading existing public key from ' + publicKeyPemFile);
+        var pair = {publicKey: data};
+        callback(null, pair, false);
+      });
     },
     function(pair, writeToFile, callback) {
       if(writeToFile) {
         // write the generated keys to disk
         console.log('Wrote new public key to ' + publicKeyPemFile);
-        fs.writeFile(publicKeyPemFile, pair.publicKey);
+        fs.writeFileSync(publicKeyPemFile, pair.publicKey);
         console.log('Wrote new private key to ' + privateKeyPemFile);
-        fs.writeFile(privateKeyPemFile, pair.privateKey);
+        fs.writeFileSync(privateKeyPemFile, pair.privateKey);
       }
       callback(null, pair.publicKey);
     },
@@ -124,8 +106,9 @@ keyRegistration.run = function() {
     },
     function(registrationEndpoint, publicKeyPem, callback) {
       // generate the key registration URL
-      var registrationUrl = registrationEndpoint + '?' +
-        querystring.stringify({'public-key': publicKeyPem});
+      var registrationUrl = URL.parse(registrationEndpoint, true);
+      registrationUrl.query['public-key'] = publicKeyPem;
+      registrationUrl = URL.format(registrationUrl);
       console.log('Register your public key by going to the following link:\n',
         registrationUrl);
       callback();
@@ -136,14 +119,12 @@ keyRegistration.run = function() {
     });
 };
 
-// log uncaught exception and exit
 process.on('uncaughtException', function(err) {
-  console.log(
-    err.toString(), err.stack ? {stack: err.stack} : null);
+  // log uncaught exception and exit
+  console.log(err.toString(), err.stack ? {stack: err.stack} : null);
   process.removeAllListeners('uncaughtException');
   process.exit();
 });
 
 // run the program
 keyRegistration.run();
-
