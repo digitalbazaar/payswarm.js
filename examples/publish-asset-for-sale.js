@@ -1,5 +1,5 @@
 /**
- * Example of how to create and register a new public/private keypair.
+ * Example of how to create and publish an asset for sale.
  *
  * @author Manu Sporny
  *
@@ -40,9 +40,9 @@ var path = require('path');
 var fs = require('fs');
 var querystring = require('querystring');
 
-var keyRegistration = {};
+var assetRegistration = {};
 
-keyRegistration.run = function() {
+assetRegistration.run = function() {
   program
     .version('1.0.0')
     // setup the command line options
@@ -50,85 +50,31 @@ keyRegistration.run = function() {
       'The file containing the public key (default: public.pem).')
     .option('--private-key <pemfile>',
       'The file containing the private key (default: private.pem).')
-    .option('--authority <authority_url>',
-      'The base URL for the PaySwarm Authority (default: http://dev.payswarm.com/)')
+    .option('--asset-name <title>',
+      'The asset name (default: \'Test Asset\').')
+    .option('--price <dollars>',
+      'The price (in dollars) of the asset (default: 0.05).')
+    .option('--listing-service <listing_url>',
+      'The base URL for the listing service (default: http://listings.dev.payswarm.com/)')
     .parse(process.argv);
 
   // initialize settings
   var publicKeyPemFile = program.publicKey || 'public.pem';
   var privateKeyPemFile = program.privateKey || 'private.pem';
+  var assetName = program.assetName || 'Test Asset';
+  var price = program.price || '0.05';
   var payswarmAuthority = program.authority || 'http://dev.payswarm.com/';
 
   /*
-   * To register a key, the following steps must be performed:
+   * To publish an asset for sale, the following steps must be performed:
    *
-   * 1. Generate a public/private keypair (or use an existing one).
-   * 2. Fetch the Web Keys registration endpoint from the PaySwarm Authority.
-   * 3. Generate the registration URL.
+   * 1. Create and digitally sign the asset.
+   * 2. Create and digitally sign the listing.
+   * 3. Publish the asset and listing data to the Web.
    */
   async.waterfall([
     function(callback) {
-      // check to see if the public key PEM file exists
-      path.exists(publicKeyPemFile, function(exists) {
-        callback(null, exists);
-      });
-    },
-    function(exists, callback) {
-      // if the public key file exists, use the contents - if not, generate keys
-      if(exists) {
-        // get information on the public key file
-        fs.stat(publicKeyPemFile, function(err, stats) {
-          if(err) {
-            callback(err);
-          }
-          if(stats.isFile()) {
-            // get the data in the public key file
-            fs.readFile(publicKeyPemFile, 'utf8', function(err, data) {
-              if(err) {
-                return callback(err);
-              }
-
-              // format the public key data for the next step in the process
-              console.log('Reading existing public key from ' +
-                publicKeyPemFile);
-              var pair = {};
-              pair.publicKey = data;
-              callback(null, pair, false);
-            });
-          }
-        });
-      }
-      else {
-        // generate a new public/private keypair
-        payswarm.createKeyPair({keySize: 512}, function(err, pair) {
-          callback(err, pair, true);
-        });
-      }
-    },
-    function(pair, writeToFile, callback) {
-      if(writeToFile) {
-        // write the generated keys to disk
-        console.log('Wrote new public key to ' + publicKeyPemFile);
-        fs.writeFile(publicKeyPemFile, pair.publicKey);
-        console.log('Wrote new private key to ' + privateKeyPemFile);
-        fs.writeFile(privateKeyPemFile, pair.privateKey);
-      }
-      callback(null, pair.publicKey);
-    },
-    function(publicKeyPem, callback) {
-      // TODO: retrieve key registration end-point
-      var endpoints = {
-        publicKeyService: payswarmAuthority + 'keys'
-      };
-      callback(null, endpoints.publicKeyService, publicKeyPem);
-    },
-    function(registrationEndpoint, publicKeyPem, callback) {
-      // generate the key registration URL
-      var registrationUrl = registrationEndpoint + '?' +
-        querystring.stringify({'public-key': publicKeyPem});
-      console.log('Register your public key by going to the following link:\n',
-        registrationUrl);
-      callback();
+      console.log("TODO: Implement the creation/registration process");
     }], function (err) {
       if(err) {
         console.log('Error', err);
@@ -145,5 +91,5 @@ process.on('uncaughtException', function(err) {
 });
 
 // run the program
-keyRegistration.run();
+assetRegistration.run();
 
