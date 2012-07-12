@@ -75,21 +75,20 @@ assetRegistration.run = function() {
   async.waterfall([
     function(callback) {
       console.log("TODO: Implement the creation/registration process");
-    }], function (err) {
-      if(err) {
-        console.log('Error', err);
-      }
-    });
+    }
+  ], function (err) {
+    if(err) {
+      console.log('Error', err);
+    }
+  });
 };
 
 // log uncaught exception and exit
 process.on('uncaughtException', function(err) {
-  console.log(
-    err.toString(), err.stack ? {stack: err.stack} : null);
+  console.log(err.toString(), err.stack ? {stack: err.stack} : null);
   process.removeAllListeners('uncaughtException');
   process.exit();
 });
 
 // run the program
 assetRegistration.run();
-

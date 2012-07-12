@@ -111,11 +111,12 @@ keyRegistration.run = function() {
       console.log('Register your public key by going to the following link:\n',
         registrationUrl);
       callback();
-    }], function (err) {
-      if(err) {
-        console.log('Error', err);
-      }
-    });
+    }
+  ], function (err) {
+    if(err) {
+      console.log('Error', err);
+    }
+  });
 };
 
 process.on('uncaughtException', function(err) {
