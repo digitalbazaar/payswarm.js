@@ -36,7 +36,6 @@
 var async = require('async');
 var program = require('commander');
 var payswarm = require('../lib/payswarm-client.js');
-var path = require('path');
 var fs = require('fs');
 var URL = require('url');
 
