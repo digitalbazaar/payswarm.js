@@ -35,6 +35,7 @@
  */
 var async = require('async');
 var program = require('commander');
+var prompt = require('prompt');
 var payswarm = require('../lib/payswarm-client.js');
 var fs = require('fs');
 var URL = require('url');
@@ -45,17 +46,15 @@ keyRegistration.run = function() {
   program
     .version('1.0.0')
     // setup the command line options
-    .option('--public-key <pemfile>',
-      'The file containing the public key (default: public.pem).')
-    .option('--private-key <pemfile>',
-      'The file containing the private key (default: private.pem).')
+    .option('--config <configfile>',
+      'The file containing the public & private keys (default: payswarm.cfg).')
     .option('--authority <authority_url>',
       'The base URL for the PaySwarm Authority (default: http://dev.payswarm.com/)')
     .parse(process.argv);
 
   // initialize settings
-  var publicKeyPemFile = program.publicKey || 'public.pem';
-  var privateKeyPemFile = program.privateKey || 'private.pem';
+  var configFile = program.config || 'payswarm.cfg';
+  var config = {};
   var payswarmAuthority = program.authority || 'http://dev.payswarm.com/';
 
   /*
@@ -63,53 +62,79 @@ keyRegistration.run = function() {
    *
    * 1. Generate a public/private keypair (or use an existing one).
    * 2. Fetch the Web Keys registration endpoint from the PaySwarm Authority.
-   * 3. Generate the registration URL.
+   * 3. Generate the key registration URL and go to it in a browser.
+   * 4. Get the new key's URL.
    */
   async.waterfall([
     function(callback) {
       // get the data in the public key file
-      fs.readFile(publicKeyPemFile, 'utf8', function(err, data) {
+      fs.readFile(configFile, 'utf8', function(err, data) {
         if(err) {
           // file does not exist error
           if(err.code === 'ENOENT') {
             // public key doesn't exist, generate a new keypair
             return payswarm.createKeyPair({keySize: 512}, function(err, pair) {
-              callback(err, pair, true);
+              // update the configuration object with the new key info
+              config['@context'] = 'http://purl.org/payswarm/v1',
+              config.publicKey = {};
+              config.publicKey.publicKeyPem = pair.publicKey;
+              config.publicKey.privateKeyPem = pair.privateKey;
+              callback(err, config, true);
             });
           }
           return callback(err);
         }
 
         // format the public key data for the next step in the process
-        console.log('Reading existing public key from ' + publicKeyPemFile);
-        var pair = {publicKey: data};
-        callback(null, pair, false);
+        console.log('Reading existing public key from ' + configFile);
+        config = JSON.parse(data);
+        callback(null, config, false);
       });
     },
-    function(pair, writeToFile, callback) {
+    function(config, writeToFile, callback) {
       if(writeToFile) {
         // write the generated keys to disk
-        console.log('Wrote new public key to ' + publicKeyPemFile);
-        fs.writeFileSync(publicKeyPemFile, pair.publicKey);
-        console.log('Wrote new private key to ' + privateKeyPemFile);
-        fs.writeFileSync(privateKeyPemFile, pair.privateKey);
+        fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
       }
-      callback(null, pair.publicKey);
+      callback(null, config);
     },
-    function(publicKeyPem, callback) {
+    function(config, callback) {
       // TODO: retrieve key registration end-point
       var endpoints = {
         publicKeyService: payswarmAuthority + 'keys'
       };
-      callback(null, endpoints.publicKeyService, publicKeyPem);
+      callback(null, endpoints.publicKeyService, config);
     },
-    function(registrationEndpoint, publicKeyPem, callback) {
+    function(registrationEndpoint, config, callback) {
       // generate the key registration URL
       var registrationUrl = URL.parse(registrationEndpoint, true);
-      registrationUrl.query['public-key'] = publicKeyPem;
+      registrationUrl.query['public-key'] = config.publicKey.publicKeyPem;
       registrationUrl = URL.format(registrationUrl);
-      console.log('Register your public key by going to the following link:\n',
+      console.log(
+        'To register your new key, go to this URL using a Web browser:\n',
         registrationUrl);
+
+      // get the registered key URL
+      prompt.start();
+      prompt.get({
+        properties: {
+          publicKey: {
+            description: 'Then, enter your new public key URL'
+          }
+        }
+      }, function(err, results) {
+        if(err) {
+          return callback(err);
+        }
+        config.publicKey.id = results.publicKey;
+        callback(null, config);
+      });
+    },
+    function(config, callback) {
+      // save the configuration
+      fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+      console.log('Settings saved in '+ configFile + '.');
+      console.log('Completed registration of new public key.');
       callback();
     }
   ], function (err) {
