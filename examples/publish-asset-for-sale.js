@@ -192,7 +192,7 @@ assetRegistration.run = function() {
 
         if(verbose) {
           console.log('Registered signed asset and listing: ' +
-            JSON.stringify(signedListing, null, 2));
+            JSON.stringify(assetAndListing, null, 2));
         }
         else {
           console.log('Registered signed asset: ', signedAsset.id);
