@@ -167,7 +167,8 @@ assetRegistration.run = function() {
 
         callback(Error('Purchase process not completely implemented.'));
       });
-    }], function(err) {
+    }
+  ], function(err) {
     if(err) {
       console.log('Failed purchase:',
         err.toString());

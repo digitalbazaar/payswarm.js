@@ -200,11 +200,12 @@ assetRegistration.run = function() {
         }
         callback(null);
       });
-    }], function(err) {
-      if(err) {
-        console.log('Failed to register signed asset and listing:',
-          err.toString());
-      }
+    }
+  ], function(err) {
+    if(err) {
+      console.log('Failed to register signed asset and listing:',
+        err.toString());
+    }
   });
 };
 
