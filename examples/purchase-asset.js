@@ -39,6 +39,8 @@ var payswarm = require('../lib/payswarm-client.js');
 var path = require('path');
 var fs = require('fs');
 var querystring = require('querystring');
+var prompt = require('prompt');
+var request = require('request');
 
 var assetRegistration = {};
 
@@ -78,12 +80,93 @@ assetRegistration.run = function() {
         // Read the configuration file
         console.log('Reading public key information from ' + configFile);
         config = JSON.parse(data);
+
+        // overlay the command line configuration data
+        if(program.listing) {
+          config.listingUrl = program.listing;
+        }
+        if(program.source) {
+          config.source = program.source;
+        }
+
         callback(null, config);
       });
     },
     function(config, callback) {
-      // FIXME: Implement purchasing
-      callback(Error('Purchase not implemented...'));
+      if(!config.listingUrl) {
+        prompt.start();
+
+        // get the listing purchase URL
+        prompt.get({
+          properties: {
+            listingUrl: {
+              description: 'Enter the URL of the listing you want to purchase'
+            }
+          }
+        }, function(err, results) {
+          if(err) {
+            return callback(err);
+          }
+          config.listingUrl = results.listingUrl;
+          callback(null, config);
+        });
+      }
+      else {
+        callback(null, config);
+      }
+    },
+    function(config, callback) {
+      if(!config.source) {
+        prompt.start();
+
+        // get the source financial account for the purchase
+        prompt.get({
+          properties: {
+            source: {
+              description: 'Financial account URL (source of funds)'
+            }
+          }
+        }, function(err, results) {
+          if(err) {
+            return callback(err);
+          }
+          config.source = results.source;
+          callback(null, config);
+        });
+      }
+      else {
+        callback(null, config);
+      }
+    },
+    function(config, callback) {
+      // retrieve the listing
+      request.get(config.listingUrl, {}, function(err, response, body) {
+        if(!err && response.statusCode >= 400) {
+          err = Error('HTTP ' + response.statusCode + ':\n  ' + body);
+        }
+        if(err) {
+          console.log('Failed to retrieve listing information: ',
+            err.toString());
+          return callback(err);
+        }
+
+        // build the purchase request
+        var data = JSON.parse(body);
+        // FIXME: Use a JSON-LD frame here... or iterate.
+        var listing = data['@graph'][1];
+        // FIXME: Generate the proper listing hash
+        var listingHash = 'INVALID';
+        var purchaseRequest = {
+            '@context': 'http://purl.org/payswarm/v1',
+            type: 'ps:PurchaseRequest',
+            identity: config.publicKey.owner,
+            listing: listing.id,
+            listingHash: listingHash,
+            source: config.source
+          };
+
+        callback(Error('Purchase process not completely implemented.'));
+      });
     }], function(err) {
     if(err) {
       console.log('Failed purchase:',
