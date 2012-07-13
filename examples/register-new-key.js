@@ -120,6 +120,9 @@ keyRegistration.run = function() {
         properties: {
           publicKey: {
             description: 'Then, enter your new public key URL'
+          },
+          owner: {
+            description: 'Enter the URL for the owner of the public key'
           }
         }
       }, function(err, results) {
@@ -127,6 +130,7 @@ keyRegistration.run = function() {
           return callback(err);
         }
         config.publicKey.id = results.publicKey;
+        config.publicKey.owner = results.owner;
         callback(null, config);
       });
     },
