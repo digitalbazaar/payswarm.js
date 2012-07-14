@@ -52,11 +52,16 @@ assetRegistration.run = function() {
       'The configuration containing public/private keys.')
     .option('--listing <listing_url>',
       'URL for the listing to purchase.')
+    .option('--source <account_url>',
+      'URL for the financial account to use when purchasing.')
+    .option('--authority <authority_url>',
+      'The base URL for the authority (default: https://dev.payswarm.com/).')
     .parse(process.argv);
 
   // initialize settings
   var configFile = program.config || 'payswarm.cfg';
   var config = {};
+  var authority = program.authority || 'https://dev.payswarm.com/';
 
   /*
    * To purchase an asset, the following steps must be performed.
@@ -154,18 +159,56 @@ assetRegistration.run = function() {
         var data = JSON.parse(body);
         // FIXME: Use a JSON-LD frame here... or iterate.
         var listing = data['@graph'][1];
-        // FIXME: Generate the proper listing hash
-        var listingHash = 'INVALID';
-        var purchaseRequest = {
-            '@context': 'http://purl.org/payswarm/v1',
-            type: 'ps:PurchaseRequest',
-            identity: config.publicKey.owner,
-            listing: listing.id,
-            listingHash: listingHash,
-            source: config.source
-          };
 
-        callback(Error('Purchase process not completely implemented.'));
+        // generate the listing hash
+        listing['@context'] = 'http://purl.org/payswarm/v1';
+        payswarm.hash(listing, function(err, hash) {
+          if(err) {
+            return callback(err);
+          }
+
+          // generate the purchase request
+          var purchaseRequest = {
+              '@context': 'http://purl.org/payswarm/v1',
+              type: 'ps:PurchaseRequest',
+              identity: config.publicKey.owner,
+              listing: listing.id,
+              listingHash: hash,
+              source: config.source
+            };
+
+          callback(null, purchaseRequest);
+        });
+      });
+    },
+    function(purchaseRequest, callback) {
+      console.log('PR:', JSON.stringify(purchaseRequest, null, 2));
+      // sign the purchase request and send it to the PaySwarm Authority
+      payswarm.sign(purchaseRequest, {
+        publicKeyId: config.publicKey.id,
+        privateKeyPem: config.publicKey.privateKeyPem
+      }, function(err, signedRequest) {
+        if(err) {
+          return callback(err);
+        }
+        // FIXME: This should be performed in payswarm.js
+        signedRequest['@context'] = 'http://purl.org/payswarm/v1';
+        request.post({
+          url: authority + '/transactions',
+          json: signedRequest
+        }, function(err, response, body) {
+          if(!err && response.statusCode >= 400) {
+            err = JSON.stringify(body, null, 2);
+          }
+          if(err) {
+            console.log('Failed to purchase asset: ', err.toString());
+            return callback(err);
+          }
+
+          var receipt = body;
+          console.log('Purchase receipt: ' + JSON.stringify(receipt, null, 2));
+          callback();
+        });
       });
     }
   ], function(err) {
@@ -174,27 +217,6 @@ assetRegistration.run = function() {
         err.toString());
     }
   });
-
-  /*
-  // build the purchase request
-  var purchaseRequest = {
-    '@context': 'http://purl.org/payswarm/v1',
-    type: 'ps:PurchaseRequest',
-    identity: '',
-    listing: '',
-    listingHash: '',
-    source: ''
-  };
-
-  payswarm.sign(purchaseRequest, {
-    publicKeyId: config.publicKey.id,
-    privateKeyPem: config.publicKey.privateKeyPem
-  }, function(err, signedRequest) {
-    if(err) {
-      return callback(err);
-    }
-  });
-  */
 };
 
 // log uncaught exception and exit

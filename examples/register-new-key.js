@@ -73,7 +73,7 @@ keyRegistration.run = function() {
           // file does not exist error
           if(err.code === 'ENOENT') {
             // public key doesn't exist, generate a new keypair
-            return payswarm.createKeyPair({keySize: 512}, function(err, pair) {
+            return payswarm.createKeyPair({keySize: 1024}, function(err, pair) {
               // update the configuration object with the new key info
               config['@context'] = 'http://purl.org/payswarm/v1',
               config.publicKey = {};
