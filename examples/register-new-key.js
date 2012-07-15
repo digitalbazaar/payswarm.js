@@ -36,6 +36,7 @@
 var async = require('async');
 var program = require('commander');
 var prompt = require('prompt');
+var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
 var fs = require('fs');
 var URL = require('url');
@@ -53,8 +54,8 @@ keyRegistration.run = function() {
     .parse(process.argv);
 
   // initialize settings
-  var configFile = program.config || 'payswarm.cfg';
-  var config = {};
+  var cfgFile = program.config || 'payswarm.cfg';
+  var cfg = {};
   var payswarmAuthority = program.authority || 'http://dev.payswarm.com/';
 
   /*
@@ -67,48 +68,36 @@ keyRegistration.run = function() {
    */
   async.waterfall([
     function(callback) {
-      // get the data in the public key file
-      fs.readFile(configFile, 'utf8', function(err, data) {
-        if(err) {
-          // file does not exist error
-          if(err.code === 'ENOENT') {
-            // public key doesn't exist, generate a new keypair
-            return payswarm.createKeyPair({keySize: 1024}, function(err, pair) {
-              // update the configuration object with the new key info
-              config['@context'] = 'http://purl.org/payswarm/v1',
-              config.publicKey = {};
-              config.publicKey.publicKeyPem = pair.publicKey;
-              config.publicKey.privateKeyPem = pair.privateKey;
-              callback(err, config, true);
-            });
-          }
-          return callback(err);
-        }
-
-        // format the public key data for the next step in the process
-        console.log('Reading existing public key from ' + configFile);
-        config = JSON.parse(data);
-        callback(null, config, false);
-      });
+      // read the config file from disk
+      config.readConfigFile(cfgFile, callback);
     },
-    function(config, writeToFile, callback) {
-      if(writeToFile) {
-        // write the generated keys to disk
-        fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+    function(newCfg, callback)
+    {
+      cfg = newCfg;
+      if(!('publicKey' in cfg)) {
+        payswarm.createKeyPair({keySize: 1024}, function(err, pair) {
+          // update the configuration object with the new key info
+          cfg.publicKey = {};
+          cfg.publicKey.publicKeyPem = pair.publicKey;
+          cfg.publicKey.privateKeyPem = pair.privateKey;
+          config.writeConfigFile(cfgFile, cfg, callback);
+        });
       }
-      callback(null, config);
+      else {
+        callback();
+      }
     },
-    function(config, callback) {
+    function(callback) {
       // TODO: retrieve key registration end-point
       var endpoints = {
         publicKeyService: payswarmAuthority + 'keys'
       };
-      callback(null, endpoints.publicKeyService, config);
+      callback(null, endpoints.publicKeyService);
     },
-    function(registrationEndpoint, config, callback) {
+    function(registrationEndpoint, callback) {
       // generate the key registration URL
       var registrationUrl = URL.parse(registrationEndpoint, true);
-      registrationUrl.query['public-key'] = config.publicKey.publicKeyPem;
+      registrationUrl.query['public-key'] = cfg.publicKey.publicKeyPem;
       registrationUrl = URL.format(registrationUrl);
       console.log(
         'To register your new key, go to this URL using a Web browser:\n',
@@ -129,17 +118,14 @@ keyRegistration.run = function() {
         if(err) {
           return callback(err);
         }
-        config.publicKey.id = results.publicKey;
-        config.publicKey.owner = results.owner;
-        callback(null, config);
+        cfg.publicKey.id = results.publicKey;
+        cfg.publicKey.owner = results.owner;
+        callback(null);
       });
     },
-    function(config, callback) {
-      // save the configuration
-      fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
-      console.log('Settings saved in '+ configFile + '.');
+    function(callback) {
+      config.writeConfigFile(cfgFile, cfg, callback);
       console.log('Completed registration of new public key.');
-      callback();
     }
   ], function (err) {
     if(err) {
