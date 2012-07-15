@@ -38,7 +38,6 @@ var program = require('commander');
 var prompt = require('prompt');
 var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
-var fs = require('fs');
 var URL = require('url');
 
 var keyRegistration = {};

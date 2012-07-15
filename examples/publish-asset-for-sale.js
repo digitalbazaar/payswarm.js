@@ -35,6 +35,7 @@
  */
 var async = require('async');
 var program = require('commander');
+var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
 var path = require('path');
 var fs = require('fs');
@@ -61,8 +62,8 @@ assetRegistration.run = function() {
     .parse(process.argv);
 
   // initialize settings
-  var configFile = program.config || 'payswarm.cfg';
-  var config = {};
+  var cfgFile = program.config || 'payswarm.cfg';
+  var cfg = {};
   var assetName = program.assetName || 'Test Asset ' + assetId;
   var price = program.price || '0.05';
   var listingService = program.listingService || 'http://listings.dev.payswarm.com/';
@@ -77,24 +78,11 @@ assetRegistration.run = function() {
    */
   async.waterfall([
     function(callback) {
-      // read the config file
-      fs.readFile(configFile, 'utf8', function(err, data) {
-        if(err) {
-          // file does not exist error
-          if(err.code === 'ENOENT') {
-            console.log(
-              'The config file named ' + configFile + ' does not exist.');
-            return callback(err);
-          }
-        }
-
-        // Read the configuration file
-        console.log('Reading public key information from ' + configFile);
-        config = JSON.parse(data);
-        callback(null, config);
-      });
+      // read the config file from disk
+      config.readConfigFile(cfgFile, callback);
     },
-    function(config, callback) {
+    function(newCfg, callback) {
+      cfg = newCfg;
       // generate the asset
       var assetUrl = listingService + 'payswarm.js/' + assetId;
       var asset = {
@@ -105,13 +93,13 @@ assetRegistration.run = function() {
         },
         title: assetName,
         assetContent: assetUrl,
-        assetProvider: config.publicKey.owner,
+        assetProvider: cfg.publicKey.owner,
       };
 
       // set the options to use when signing the asset
       var signingOptions = {};
-      signingOptions.publicKeyId = config.publicKey.id;
-      signingOptions.privateKeyPem = config.publicKey.privateKeyPem;
+      signingOptions.publicKeyId = cfg.publicKey.id;
+      signingOptions.privateKeyPem = cfg.publicKey.privateKeyPem;
 
       // sign the asset
       payswarm.sign(asset, signingOptions, callback);
@@ -160,8 +148,8 @@ assetRegistration.run = function() {
 
       // set the options to use when signing the listing
       var signingOptions = {};
-      signingOptions.publicKeyId = config.publicKey.id;
-      signingOptions.privateKeyPem = config.publicKey.privateKeyPem;
+      signingOptions.publicKeyId = cfg.publicKey.id;
+      signingOptions.privateKeyPem = cfg.publicKey.privateKeyPem;
 
       // sign the listing
       payswarm.sign(listing, signingOptions,

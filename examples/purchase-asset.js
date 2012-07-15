@@ -35,6 +35,7 @@
  */
 var async = require('async');
 var program = require('commander');
+var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
 var path = require('path');
 var fs = require('fs');
@@ -59,8 +60,8 @@ assetRegistration.run = function() {
     .parse(process.argv);
 
   // initialize settings
-  var configFile = program.config || 'payswarm.cfg';
-  var config = {};
+  var cfgFile = program.config || 'payswarm.cfg';
+  var cfg = {};
   var authority = program.authority || 'https://dev.payswarm.com/';
 
   /*
@@ -71,34 +72,22 @@ assetRegistration.run = function() {
    */
   async.waterfall([
     function(callback) {
-      // read the config file
-      fs.readFile(configFile, 'utf8', function(err, data) {
-        if(err) {
-          // file does not exist error
-          if(err.code === 'ENOENT') {
-            console.log(
-              'The config file named ' + configFile + ' does not exist.');
-            return callback(err);
-          }
-        }
-
-        // Read the configuration file
-        console.log('Reading public key information from ' + configFile);
-        config = JSON.parse(data);
-
-        // overlay the command line configuration data
-        if(program.listing) {
-          config.listingUrl = program.listing;
-        }
-        if(program.source) {
-          config.source = program.source;
-        }
-
-        callback(null, config);
-      });
+      // read the config file from disk
+      config.readConfigFile(cfgFile, callback);
     },
-    function(config, callback) {
-      if(!config.listingUrl) {
+    function(newCfg, callback) {
+      cfg = newCfg;
+      // overlay the command line configuration data
+      if(program.listing) {
+        cfg.listingUrl = program.listing;
+      }
+      if(program.source) {
+        cfg.source = program.source;
+      }
+      callback();
+    },
+    function(callback) {
+      if(!cfg.listingUrl) {
         prompt.start();
 
         // get the listing purchase URL
@@ -112,16 +101,16 @@ assetRegistration.run = function() {
           if(err) {
             return callback(err);
           }
-          config.listingUrl = results.listingUrl;
-          callback(null, config);
+          cfg.listingUrl = results.listingUrl;
+          callback();
         });
       }
       else {
-        callback(null, config);
+        callback();
       }
     },
-    function(config, callback) {
-      if(!config.source) {
+    function(callback) {
+      if(!cfg.source) {
         prompt.start();
 
         // get the source financial account for the purchase
@@ -135,17 +124,17 @@ assetRegistration.run = function() {
           if(err) {
             return callback(err);
           }
-          config.source = results.source;
-          callback(null, config);
+          cfg.source = results.source;
+          callback();
         });
       }
       else {
-        callback(null, config);
+        callback();
       }
     },
-    function(config, callback) {
+    function(callback) {
       // retrieve the listing
-      request.get(config.listingUrl, {}, function(err, response, body) {
+      request.get(cfg.listingUrl, {}, function(err, response, body) {
         if(!err && response.statusCode >= 400) {
           err = Error('HTTP ' + response.statusCode + ':\n  ' + body);
         }
@@ -171,10 +160,10 @@ assetRegistration.run = function() {
           var purchaseRequest = {
               '@context': 'http://purl.org/payswarm/v1',
               type: 'ps:PurchaseRequest',
-              identity: config.publicKey.owner,
+              identity: cfg.publicKey.owner,
               listing: listing.id,
               listingHash: hash,
-              source: config.source
+              source: cfg.source
             };
 
           callback(null, purchaseRequest);
@@ -185,8 +174,8 @@ assetRegistration.run = function() {
       console.log('PR:', JSON.stringify(purchaseRequest, null, 2));
       // sign the purchase request and send it to the PaySwarm Authority
       payswarm.sign(purchaseRequest, {
-        publicKeyId: config.publicKey.id,
-        privateKeyPem: config.publicKey.privateKeyPem
+        publicKeyId: cfg.publicKey.id,
+        privateKeyPem: cfg.publicKey.privateKeyPem
       }, function(err, signedRequest) {
         if(err) {
           return callback(err);
