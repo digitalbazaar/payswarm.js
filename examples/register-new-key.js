@@ -74,6 +74,7 @@ keyRegistration.run = function() {
     {
       cfg = newCfg;
       if(!('publicKey' in cfg)) {
+        console.log("Generating new public/private keypair...");
         payswarm.createKeyPair({keySize: 1024}, function(err, pair) {
           // update the configuration object with the new key info
           cfg.publicKey = {};
@@ -87,16 +88,18 @@ keyRegistration.run = function() {
       }
     },
     function(callback) {
-      // TODO: retrieve key registration end-point
-      var endpoints = {
-        publicKeyService: payswarmAuthority + 'keys'
-      };
-      callback(null, endpoints.publicKeyService);
+      // retrieve the configuration for the Web Keys endpoints
+      var webKeysUrl = URL.parse(payswarmAuthority, true, true);
+      payswarm.getWebKeysConfig(webKeysUrl.host, callback);
     },
-    function(registrationEndpoint, callback) {
+    function(endpoints, callback) {
       // generate the key registration URL
-      var registrationUrl = URL.parse(registrationEndpoint, true);
+      var registrationUrl = URL.parse(endpoints.publicKeyService, true, true);
       registrationUrl.query['public-key'] = cfg.publicKey.publicKeyPem;
+      if(registrationUrl.search) {
+        delete registrationUrl.search;
+      }
+      console.log(registrationUrl, URL.format(registrationUrl));
       registrationUrl = URL.format(registrationUrl);
       console.log(
         'To register your new key, go to this URL using a Web browser:\n',
