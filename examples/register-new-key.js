@@ -70,8 +70,7 @@ keyRegistration.run = function() {
       // read the config file from disk
       config.readConfigFile(cfgFile, callback);
     },
-    function(newCfg, callback)
-    {
+    function(newCfg, callback) {
       cfg = newCfg;
       if(!('publicKey' in cfg)) {
         console.log("Generating new public/private keypair...");
@@ -83,9 +82,7 @@ keyRegistration.run = function() {
           config.writeConfigFile(cfgFile, cfg, callback);
         });
       }
-      else {
-        callback();
-      }
+      callback();
     },
     function(callback) {
       // retrieve the configuration for the Web Keys endpoints
@@ -122,7 +119,7 @@ keyRegistration.run = function() {
         }
         cfg.publicKey.id = results.publicKey;
         cfg.publicKey.owner = results.owner;
-        callback(null);
+        callback();
       });
     },
     function(callback) {

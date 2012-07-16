@@ -96,13 +96,11 @@ assetRegistration.run = function() {
         assetProvider: cfg.publicKey.owner,
       };
 
-      // set the options to use when signing the asset
-      var signingOptions = {};
-      signingOptions.publicKeyId = cfg.publicKey.id;
-      signingOptions.privateKeyPem = cfg.publicKey.privateKeyPem;
-
       // sign the asset
-      payswarm.sign(asset, signingOptions, callback);
+      payswarm.sign(asset, {
+        publicKeyId: cfg.publicKey.id,
+        privateKeyPem: cfg.publicKey.privateKeyPem
+      }, callback);
     },
     function(signedAsset, callback) {
       // generate a hash for the signed asset
@@ -146,15 +144,12 @@ assetRegistration.run = function() {
         validUntil: validUntil,
       };
 
-      // set the options to use when signing the listing
-      var signingOptions = {};
-      signingOptions.publicKeyId = cfg.publicKey.id;
-      signingOptions.privateKeyPem = cfg.publicKey.privateKeyPem;
-
       // sign the listing
-      payswarm.sign(listing, signingOptions,
-        function(err, signedListing) {
-          callback(err, signedAsset, signedListing);
+      payswarm.sign(listing, {
+        publicKeyId: cfg.publicKey.id,
+        privateKeyPem: cfg.publicKey.privateKeyPem
+      }, function(err, signedListing) {
+        callback(err, signedAsset, signedListing);
       });
     },
     function(signedAsset, signedListing, callback) {
