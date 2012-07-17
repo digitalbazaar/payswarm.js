@@ -82,7 +82,9 @@ keyRegistration.run = function() {
           config.writeConfigFile(cfgFile, cfg, callback);
         });
       }
-      callback();
+      else {
+        callback();
+      }
     },
     function(callback) {
       // retrieve the configuration for the Web Keys endpoints
@@ -93,34 +95,42 @@ keyRegistration.run = function() {
       // generate the key registration URL
       var registrationUrl = URL.parse(endpoints.publicKeyService, true, true);
       registrationUrl.query['public-key'] = cfg.publicKey.publicKeyPem;
-      if(registrationUrl.search) {
-        delete registrationUrl.search;
-      }
-      console.log(registrationUrl, URL.format(registrationUrl));
+      registrationUrl.query['response-nonce'] =
+        new Date().getTime().toString(16);
+      delete registrationUrl.search;
       registrationUrl = URL.format(registrationUrl);
       console.log(
         'To register your new key, go to this URL using a Web browser:\n',
         registrationUrl);
 
-      // get the registered key URL
-      prompt.start();
-      prompt.get({
-        properties: {
-          publicKey: {
-            description: 'Then, enter your new public key URL'
-          },
-          owner: {
-            description: 'Enter the URL for the owner of the public key'
-          }
+      // read the encrypted message from the command line
+      // NOTE: Cannot use buffered input as it is limited to 4096 bytes
+      //       and encrypted messages are usually greater than that size.
+      console.log("Then, enter the encrypted registration message:");
+
+      process.stdin.resume();
+      var encryptedMessage = '';
+      require('tty').setRawMode(true);
+      process.stdin.on('keypress', function (chunk, key) {
+        encryptedMessage += chunk;
+        process.stdout.write(chunk);
+        if(key && key.name == 'enter') {
+          process.stdout.write(chunk);
+          process.stdin.pause();
+          callback(null, JSON.parse(encryptedMessage));
         }
-      }, function(err, results) {
-        if(err) {
-          return callback(err);
-        }
-        cfg.publicKey.id = results.publicKey;
-        cfg.publicKey.owner = results.owner;
-        callback();
       });
+    },
+    function(encryptedMessage, callback) {
+      // add the private key retrieval hook to the payswarm client
+      payswarm.addHook('getPrivateKey', function(callback) {
+        callback(null, cfg.publicKey);
+      });
+
+      payswarm.decrypt(encryptedMessage, callback);
+    },
+    function(message, callback) {
+      console.log("DM: ", message);
     },
     function(callback) {
       config.writeConfigFile(cfgFile, cfg, callback);
