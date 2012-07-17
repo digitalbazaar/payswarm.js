@@ -122,12 +122,8 @@ keyRegistration.run = function() {
       });
     },
     function(encryptedMessage, callback) {
-      // add the private key retrieval hook to the payswarm client
-      payswarm.addHook('getPrivateKey', function(callback) {
-        callback(null, cfg.publicKey);
-      });
-
-      payswarm.decrypt(encryptedMessage, callback);
+      payswarm.decrypt(encryptedMessage,
+        {privateKey: cfg.publicKey.privateKeyPem}, callback);
     },
     function(message, callback) {
       console.log("DM: ", message);
