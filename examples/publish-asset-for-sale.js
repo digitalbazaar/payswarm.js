@@ -50,7 +50,7 @@ assetRegistration.run = function() {
     .version('1.0.0')
     // setup the command line options
     .option('--config <configfile>',
-      'The configuration containing public/private keys.')
+      'The configuration containing public/private keys (default: payswarm.cfg).')
     .option('--asset-name <title>',
       'The asset name (default: \'Test Asset ' + assetId + '\').')
     .option('--price <dollars>',
@@ -84,6 +84,7 @@ assetRegistration.run = function() {
     function(newCfg, callback) {
       cfg = newCfg;
       // generate the asset
+      console.log("Generating asset...");
       var assetUrl = listingService + 'payswarm.js/' + assetId;
       var asset = {
         id: assetUrl + '#asset',
@@ -115,6 +116,7 @@ assetRegistration.run = function() {
       validUntil.setFullYear(validFrom.getFullYear() + 1);
 
       // generate the listing
+      console.log("Generating listing...");
       var listingUrl = listingService + 'payswarm.js/' + assetId;
 
       var listing = {
@@ -178,8 +180,8 @@ assetRegistration.run = function() {
             JSON.stringify(assetAndListing, null, 2));
         }
         else {
-          console.log('Registered signed asset: ', signedAsset.id);
-          console.log('Registered signed listing: ', signedListing.id);
+          console.log('Registered signed asset:\n   ', signedAsset.id);
+          console.log('Registered signed listing:\n   ', signedListing.id);
         }
         callback(null);
       });
