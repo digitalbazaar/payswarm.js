@@ -33,7 +33,8 @@
     "async": "~0.1.22",
     "node-forge": "git://github.com/digitalbazaar/forge.git",
     "jsonld": "git://github.com/digitalbazaar/jsonld.js.git",
-    "request": "~2.9.202"
+    "request": "~2.9.202",
+    "rsa": "~0.0.3"
   },
   "devDependencies": {
     "commander": "~0.6.1",

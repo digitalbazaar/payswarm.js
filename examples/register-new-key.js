@@ -107,34 +107,50 @@ keyRegistration.run = function() {
       // NOTE: Cannot use buffered input as it is limited to 4096 bytes
       //       and encrypted messages are usually greater than that size.
       console.log("Then, enter the encrypted registration message:");
-
-      process.stdin.resume();
-      var encryptedMessage = '';
-      require('tty').setRawMode(true);
-      process.stdin.on('keypress', function (chunk, key) {
-        encryptedMessage += chunk;
-        process.stdout.write(chunk);
-        if(key && key.name == 'enter') {
-          process.stdout.write(chunk);
-          process.stdin.pause();
-          callback(null, JSON.parse(encryptedMessage));
-        }
-      });
+      _unbufferedReadFromStdin(callback);
     },
     function(encryptedMessage, callback) {
       payswarm.decrypt(encryptedMessage,
         {privateKey: cfg.publicKey.privateKeyPem}, callback);
     },
     function(message, callback) {
-      console.log("DM: ", message);
+      // set the proper configuration variables
+      cfg.publicKey.id = message.publicKey;
+      cfg.owner = message.owner;
+      cfg.source = message.destination;
+      callback();
     },
     function(callback) {
       config.writeConfigFile(cfgFile, cfg, callback);
-      console.log('Completed registration of new public key.');
+      console.log('Completed registration of new public key:');
+      console.log('   Public Key Owner :', cfg.owner);
+      console.log('   Financial Account:', cfg.source);
+      console.log('   Public Key URL   :', cfg.publicKey.id);
     }
   ], function (err) {
     if(err) {
       console.log('Error', err);
+    }
+  });
+};
+
+/**
+ * Reads from stdin in an unbuffered way. This is necessary in order to
+ * capture lines that are greater than 4096 characters in length.
+ *
+ * @param callback(err, data) called when a newline character is detected.
+ */
+function _unbufferedReadFromStdin(callback) {
+  process.stdin.resume();
+  var input = '';
+  require('tty').setRawMode(true);
+  process.stdin.on('keypress', function(chunk, key) {
+    input += chunk;
+    process.stdout.write(chunk);
+    if(key && key.name == 'enter') {
+      process.stdout.write('\n\n');
+      process.stdin.pause();
+      callback(null, JSON.parse(input));
     }
   });
 };
