@@ -85,56 +85,52 @@ assetRegistration.run = function() {
       callback();
     },
     function(callback) {
-      if(!cfg.listingUrl) {
-        prompt.start();
+      if(cfg.listingUrl) {
+        return callback();
+      }
 
-        // get the listing purchase URL
-        prompt.get({
-          properties: {
-            listingUrl: {
-              description: 'Enter the URL of the listing you want to purchase'
-            }
+      // get the listing purchase URL from stdin
+      prompt.start();
+      prompt.get({
+        properties: {
+          listingUrl: {
+            description: 'Enter the URL of the listing you want to purchase'
           }
-        }, function(err, results) {
-          if(err) {
-            return callback(err);
-          }
-          cfg.listingUrl = results.listingUrl;
-          callback();
-        });
-      }
-      else {
+        }
+      }, function(err, results) {
+        if(err) {
+          return callback(err);
+        }
+        cfg.listingUrl = results.listingUrl;
         callback();
-      }
+      });
     },
     function(callback) {
-      if(!cfg.source) {
-        prompt.start();
+      if(cfg.source) {
+        return callback();
+      }
 
-        // get the source financial account for the purchase
-        prompt.get({
-          properties: {
-            source: {
-              description: 'Financial account URL (source of funds)'
-            }
+      // get the source financial account for the purchase from stdin
+      prompt.start();
+      prompt.get({
+        properties: {
+          source: {
+            description: 'Financial account URL (source of funds)'
           }
-        }, function(err, results) {
-          if(err) {
-            return callback(err);
-          }
-          cfg.source = results.source;
-          callback();
-        });
-      }
-      else {
+        }
+      }, function(err, results) {
+        if(err) {
+          return callback(err);
+        }
+        cfg.source = results.source;
         callback();
-      }
+      });
     },
     function(callback) {
       // perform the purchase
       payswarm.purchase(cfg.listingUrl, {
         transactionService: authority + 'transactions',
-        buyer: cfg.owner,
+        customer: cfg.owner,
         source: cfg.source,
         publicKey: cfg.publicKey.id,
         privateKeyPem: cfg.publicKey.privateKeyPem
@@ -142,7 +138,7 @@ assetRegistration.run = function() {
     },
     function(receipt, callback) {
       // print the receipt to the console
-      console.log("RECEIPT:", JSON.stringify(receipt, null, 2));
+      console.log('RECEIPT:', JSON.stringify(receipt, null, 2));
       callback();
     }], function(err) {
     if(err) {
