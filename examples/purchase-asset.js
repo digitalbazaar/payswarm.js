@@ -37,11 +37,9 @@ var async = require('async');
 var program = require('commander');
 var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
-var path = require('path');
-var fs = require('fs');
-var querystring = require('querystring');
 var prompt = require('prompt');
 var request = require('request');
+var jsonld = require('jsonld');
 
 var assetRegistration = {};
 
@@ -133,77 +131,22 @@ assetRegistration.run = function() {
       }
     },
     function(callback) {
-      // retrieve the listing
-      request.get(cfg.listingUrl, {}, function(err, response, body) {
-        if(!err && response.statusCode >= 400) {
-          err = Error('HTTP ' + response.statusCode + ':\n  ' + body);
-        }
-        if(err) {
-          console.log('Failed to retrieve listing information: ',
-            err.toString());
-          return callback(err);
-        }
-
-        // build the purchase request
-        var data = JSON.parse(body);
-        // FIXME: Use a JSON-LD frame here... or iterate.
-        var listing = data['@graph'][1];
-
-        // generate the listing hash
-        listing['@context'] = 'http://purl.org/payswarm/v1';
-        payswarm.hash(listing, function(err, hash) {
-          if(err) {
-            return callback(err);
-          }
-
-          // generate the purchase request
-          var purchaseRequest = {
-              '@context': 'http://purl.org/payswarm/v1',
-              type: 'ps:PurchaseRequest',
-              identity: cfg.publicKey.owner,
-              listing: listing.id,
-              listingHash: hash,
-              source: cfg.source
-            };
-
-          callback(null, purchaseRequest);
-        });
-      });
-    },
-    function(purchaseRequest, callback) {
-      console.log('PR:', JSON.stringify(purchaseRequest, null, 2));
-      // sign the purchase request and send it to the PaySwarm Authority
-      payswarm.sign(purchaseRequest, {
-        publicKeyId: cfg.publicKey.id,
+      // perform the purchase
+      payswarm.purchase(cfg.listingUrl, {
+        transactionService: authority + 'transactions',
+        buyer: cfg.owner,
+        source: cfg.source,
+        publicKey: cfg.publicKey.id,
         privateKeyPem: cfg.publicKey.privateKeyPem
-      }, function(err, signedRequest) {
-        if(err) {
-          return callback(err);
-        }
-        // FIXME: This should be performed in payswarm.js
-        signedRequest['@context'] = 'http://purl.org/payswarm/v1';
-        request.post({
-          url: authority + '/transactions',
-          json: signedRequest
-        }, function(err, response, body) {
-          if(!err && response.statusCode >= 400) {
-            err = JSON.stringify(body, null, 2);
-          }
-          if(err) {
-            console.log('Failed to purchase asset: ', err.toString());
-            return callback(err);
-          }
-
-          var receipt = body;
-          console.log('Purchase receipt: ' + JSON.stringify(receipt, null, 2));
-          callback();
-        });
-      });
-    }
-  ], function(err) {
+      }, callback);
+    },
+    function(receipt, callback) {
+      // print the receipt to the console
+      console.log("RECEIPT:", JSON.stringify(receipt, null, 2));
+      callback();
+    }], function(err) {
     if(err) {
-      console.log('Failed purchase:',
-        err.toString());
+      console.log('Purchase error: ', err);
     }
   });
 };
