@@ -87,6 +87,7 @@ assetRegistration.run = function() {
       console.log("Generating asset...");
       var assetUrl = listingService + 'payswarm.js/' + assetId;
       var asset = {
+        '@context': 'http://purl.org/payswarm/v1',
         id: assetUrl + '#asset',
         type: ['ps:Asset', 'pto:WebPage'],
         creator: {
@@ -94,7 +95,7 @@ assetRegistration.run = function() {
         },
         title: assetName,
         assetContent: assetUrl,
-        assetProvider: cfg.publicKey.owner,
+        assetProvider: cfg.owner,
       };
 
       // sign the asset
@@ -120,6 +121,7 @@ assetRegistration.run = function() {
       var listingUrl = listingService + 'payswarm.js/' + assetId;
 
       var listing = {
+        '@context': 'http://purl.org/payswarm/v1',
         id: listingUrl + '#listing',
         type: ['ps:Listing', 'gr:Offering'],
         payee: [{
@@ -138,12 +140,12 @@ assetRegistration.run = function() {
           payeeRateContext: ['com:Inclusive', 'com:Tax', 'com:TaxExempt'],
           payeeRateType: 'com:Percentage'
         }],
-        asset: assetId,
+        asset: listingUrl + '#asset',
         assetHash: assetHash,
         license: 'http://purl.org/payswarm/licenses/blogging',
         licenseHash: 'ad8f72fcb47e867231d957c0bffb4c02d275926a',
-        validFrom: validFrom,
-        validUntil: validUntil,
+        validFrom: payswarm.w3cDate(validFrom),
+        validUntil: payswarm.w3cDate(validUntil),
       };
 
       // sign the listing
@@ -171,7 +173,7 @@ assetRegistration.run = function() {
         }
         if(err) {
           console.log('Failed to register signed asset and listing: ',
-            err.toString());
+            err.toString(), err);
           return callback(err);
         }
 
