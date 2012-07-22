@@ -127,7 +127,7 @@ assetRegistration.run = function() {
       });
     },
     function(callback) {
-      // retrieve the listing from the Web
+      // Step #1: Retrieve the listing from the Web
       payswarm.getJsonLd(cfg.listingUrl, {cache: true}, callback);
     },
     function(data, callback) {
@@ -149,7 +149,7 @@ assetRegistration.run = function() {
       callback(null, listing);
     },
     function(listing, callback) {
-      // perform the purchase
+      // Step #2: Send a purchase request for the listing
       payswarm.purchase(listing, {
         transactionService: authority + 'transactions',
         customer: cfg.owner,
