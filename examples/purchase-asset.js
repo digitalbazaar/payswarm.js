@@ -151,6 +151,7 @@ assetRegistration.run = function() {
     function(listing, callback) {
       // Step #2: Send a purchase request for the listing
       payswarm.purchase(listing, {
+        // FIXME: URL should be retrieved via a .well-known/payswarm method
         transactionService: authority + 'transactions',
         customer: cfg.owner,
         source: cfg.source,
