@@ -63,7 +63,7 @@ keyRegistration.run = function() {
    * 1. Generate a public/private keypair (or use an existing one).
    * 2. Fetch the Web Keys registration endpoint from the PaySwarm Authority.
    * 3. Generate the key registration URL and go to it in a browser.
-   * 4. Get the new key's URL.
+   * 4. Get the new key information and provide it to the program.
    */
   async.waterfall([
     function(callback) {
@@ -72,6 +72,7 @@ keyRegistration.run = function() {
     },
     function(newCfg, callback) {
       cfg = newCfg;
+      // Step #1: Generate a public/private keypair (or use an existing one).
       if(!('publicKey' in cfg)) {
         console.log("Generating new public/private keypair...");
         payswarm.createKeyPair({keySize: 1024}, function(err, pair) {
@@ -87,12 +88,12 @@ keyRegistration.run = function() {
       }
     },
     function(callback) {
-      // retrieve the configuration for the Web Keys endpoints
+      // Step #2: Fetch the Web Keys endpoint from the PaySwarm Authority.
       var webKeysUrl = URL.parse(payswarmAuthority, true, true);
       payswarm.getWebKeysConfig(webKeysUrl.host, callback);
     },
     function(endpoints, callback) {
-      // generate the key registration URL
+      // Step #3: Generate the key registration URL
       var registrationUrl = URL.parse(endpoints.publicKeyService, true, true);
       registrationUrl.query['public-key'] = cfg.publicKey.publicKeyPem;
       registrationUrl.query['response-nonce'] =
@@ -114,7 +115,7 @@ keyRegistration.run = function() {
         {privateKey: cfg.publicKey.privateKeyPem}, callback);
     },
     function(message, callback) {
-      // set the proper configuration variables
+      // Step #4: Get the new key information
       cfg.publicKey.id = message.publicKey;
       cfg.owner = message.owner;
       cfg.source = message.destination;
