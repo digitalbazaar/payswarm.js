@@ -83,7 +83,7 @@ assetRegistration.run = function() {
     },
     function(newCfg, callback) {
       cfg = newCfg;
-      // generate the asset
+      // Step #1: Create the asset and digitally sign it
       console.log("Generating asset...");
       var assetUrl = listingService + 'payswarm.js/' + assetId;
       var asset = {
@@ -116,7 +116,7 @@ assetRegistration.run = function() {
       var validUntil = new Date();
       validUntil.setFullYear(validFrom.getFullYear() + 1);
 
-      // generate the listing
+      // Step #2: Create and digitally sign the listing
       console.log("Generating listing...");
       var listingUrl = listingService + 'payswarm.js/' + assetId;
 
@@ -157,36 +157,30 @@ assetRegistration.run = function() {
       });
     },
     function(signedAsset, signedListing, callback) {
-      // register the signed listing
+      // Step #3: Register the signed asset and listing
       var assetAndListing = {
         '@context': 'http://purl.org/payswarm/v1',
         '@graph': [signedAsset, signedListing]
       };
 
-      request.post({
-        headers: {'content-type': 'application/ld+json'},
-        url: signedListing.id.split('#')[0],
-        body: JSON.stringify(assetAndListing, null, 2)
-      }, function(err, response, body) {
-        if(!err && response.statusCode >= 400) {
-          err = JSON.stringify(body, null, 2);
-        }
-        if(err) {
-          console.log('Failed to register signed asset and listing: ',
-            err.toString(), err);
-          return callback(err);
-        }
-
-        if(verbose) {
-          console.log('Registered signed asset and listing: ' +
-            JSON.stringify(assetAndListing, null, 2));
-        }
-        else {
-          console.log('Registered signed asset:\n   ', signedAsset.id);
-          console.log('Registered signed listing:\n   ', signedListing.id);
-        }
-        callback(null);
+      var url = signedListing.id.split('#')[0];
+      payswarm.postJsonLd(url, assetAndListing, function(err, result) {
+        callback(err, assetAndListing);
       });
+    },
+    function(assetAndListing, callback) {
+      // display registration details
+      if(verbose) {
+        console.log('Registered signed asset and listing: ' +
+          JSON.stringify(assetAndListing, null, 2));
+      }
+      else {
+        console.log('Registered signed asset:\n   ',
+          assetAndListing['@graph'][0].id);
+        console.log('Registered signed listing:\n   ',
+          assetAndListing['@graph'][1].id);
+      }
+      callback(null);
     }
   ], function(err) {
     if(err) {
