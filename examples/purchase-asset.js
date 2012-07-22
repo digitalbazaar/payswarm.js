@@ -89,7 +89,7 @@ assetRegistration.run = function() {
         return callback();
       }
 
-      // get the listing purchase URL from stdin
+      // get the listing purchase URL from stdin if not already specified
       prompt.start();
       prompt.get({
         properties: {
@@ -110,7 +110,7 @@ assetRegistration.run = function() {
         return callback();
       }
 
-      // get the source financial account for the purchase from stdin
+      // get the source financial account for the purchase if not specified
       prompt.start();
       prompt.get({
         properties: {
@@ -127,8 +127,30 @@ assetRegistration.run = function() {
       });
     },
     function(callback) {
+      // retrieve the listing from the Web
+      payswarm.getJsonLd(cfg.listingUrl, {cache: true}, callback);
+    },
+    function(data, callback) {
+      // extract only the listing from the retrieved data
+      var listingFrame = {
+        '@context': payswarm.createDefaultJsonLdContext(),
+        type: 'ps:Listing',
+        asset: {'@embed': false},
+        license: {'@embed': false},
+        signature: {'@embed': true}
+      };
+      jsonld.frame(data, listingFrame, callback);
+    },
+    function(framedListing, callback) {
+      // FIXME: validate listing
+      // extract the listing from the JSON-LD object and set a @context
+      var listing = framedListing['@graph'][0];
+      listing['@context'] = 'http://purl.org/payswarm/v1';
+      callback(null, listing);
+    },
+    function(listing, callback) {
       // perform the purchase
-      payswarm.purchase(cfg.listingUrl, {
+      payswarm.purchase(listing, {
         transactionService: authority + 'transactions',
         customer: cfg.owner,
         source: cfg.source,
@@ -137,12 +159,20 @@ assetRegistration.run = function() {
       }, callback);
     },
     function(receipt, callback) {
-      // print the receipt to the console
-      console.log('RECEIPT:', JSON.stringify(receipt, null, 2));
-      callback();
+      if(receipt.type && receipt.type.indexOf('ps:Contract') >= 0) {
+        // print the receipt of sale to the console
+        console.log('Successfully purchased', receipt.listing, '...');
+        console.log('Transaction ID:', receipt.id);
+        callback();
+      }
+      else
+      {
+        callback(new Error("[purchase-asset.js] " +
+          JSON.stringify(receipt, null, 2)));
+      }
     }], function(err) {
     if(err) {
-      console.log('Purchase error: ', err);
+      console.log('Purchase error:', err);
     }
   });
 };
