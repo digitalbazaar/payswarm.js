@@ -127,7 +127,7 @@ assetRegistration.run = function() {
         payee: [{
           id: listingUrl + '#listing-payee-1',
           type: 'com:Payee',
-          destination: 'https://payswarm.dev:19443/i/vendor/accounts/primary',
+          destination: cfg.source,
           payeePosition: 0,
           payeeRate: price,
           payeeRateType: 'com:FlatAmount',
