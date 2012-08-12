@@ -55,12 +55,15 @@ assetRegistration.run = function() {
       'URL for the financial account to use when purchasing.')
     .option('--authority <authority_url>',
       'The base URL for the authority (default: https://dev.payswarm.com/).')
+    .option('--verbose',
+      'Print out debugging information to the console (default: false).')
     .parse(process.argv);
 
   // initialize settings
   var cfgFile = program.config || 'payswarm.cfg';
   var cfg = {};
   var authority = program.authority || 'https://dev.payswarm.com/';
+  var verbose = program.verbose || false;
 
   /*
    * To purchase an asset, the following steps must be performed.
@@ -156,14 +159,21 @@ assetRegistration.run = function() {
         customer: cfg.owner,
         source: cfg.source,
         publicKey: cfg.publicKey.id,
-        privateKeyPem: cfg.publicKey.privateKeyPem
+        privateKeyPem: cfg.publicKey.privateKeyPem,
+        verbose: verbose
       }, callback);
     },
     function(receipt, callback) {
       if(receipt.type && receipt.type.indexOf('ps:Contract') >= 0) {
-        // print the receipt of sale to the console
-        console.log('Successfully purchased', receipt.listing, '...');
-        console.log('Transaction ID:', receipt.id);
+        if(verbose) {
+          console.log('purchase-asset - Purchase successful:',
+            JSON.stringify(receipt, null, 2));
+        }
+        else {
+          // print the receipt of sale to the console
+          console.log('Successfully purchased', receipt.listing, '...');
+          console.log('Transaction ID:', receipt.id);
+        }
         callback();
       }
       else
