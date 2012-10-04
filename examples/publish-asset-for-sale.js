@@ -128,7 +128,7 @@ assetRegistration.run = function() {
           id: listingUrl + '#listing-payee-1',
           type: 'com:Payee',
           destination: cfg.source,
-          payeePosition: 0,
+          payeeGroup: ['vendor'],
           payeeRate: price,
           payeeRateType: 'com:FlatAmount',
           comment: 'Payment for Test Asset ' + assetId + '.'
@@ -137,8 +137,7 @@ assetRegistration.run = function() {
           type: 'com:PayeeRule',
           accountOwnerType: 'ps:Authority',
           maximumPayeeRate: '10.0000000',
-          payeeRateContext: ['com:Inclusive', 'com:Tax', 'com:TaxExempt'],
-          payeeRateType: 'com:Percentage'
+          payeeRateType: 'com:PercentInclusive'
         }],
         asset: listingUrl + '#asset',
         assetHash: assetHash,
