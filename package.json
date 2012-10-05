@@ -33,11 +33,11 @@
     "async": "~0.1.22",
     "node-forge": "git://github.com/digitalbazaar/forge.git",
     "jsonld": "git://github.com/digitalbazaar/jsonld.js.git",
-    "request": "~2.9.202",
+    "request": "~2.11.0",
     "rsa": "~0.0.3"
   },
   "devDependencies": {
-    "commander": "~0.6.1",
+    "commander": "~1.0.0",
     "prompt": "=0.2.2"
   },
   "engines": {
