@@ -164,15 +164,16 @@ assetRegistration.run = function() {
       }, callback);
     },
     function(receipt, callback) {
-      if(receipt.type && receipt.type.indexOf('ps:Contract') >= 0) {
+      if(receipt.type && receipt.type === 'ps:Receipt') {
         if(verbose) {
           console.log('purchase-asset - Purchase successful:',
             JSON.stringify(receipt, null, 2));
         }
         else {
           // print the receipt of sale to the console
-          console.log('Successfully purchased', receipt.listing, '...');
-          console.log('Transaction ID:', receipt.id);
+          var contract = receipt.contract;
+          console.log('Successfully purchased', contract.listing, '...');
+          console.log('Transaction ID:', contract.id);
         }
         callback();
       }
