@@ -135,7 +135,7 @@ assetRegistration.run = function() {
         }],
         payeeRule : [{
           type: 'com:PayeeRule',
-          accountOwnerType: 'ps:Authority',
+          payeeGroupPrefix: ['authority'],
           maximumPayeeRate: '10.0000000',
           payeeRateType: 'com:PercentInclusive'
         }],
