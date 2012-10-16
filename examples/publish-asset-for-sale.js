@@ -131,13 +131,15 @@ assetRegistration.run = function() {
           payeeGroup: ['vendor'],
           payeeRate: price,
           payeeRateType: 'com:FlatAmount',
+          payeeApplyType: 'com:Exclusive',
           comment: 'Payment for Test Asset ' + assetId + '.'
         }],
         payeeRule : [{
           type: 'com:PayeeRule',
           payeeGroupPrefix: ['authority'],
           maximumPayeeRate: '10.0000000',
-          payeeRateType: 'com:PercentInclusive'
+          payeeRateType: 'com:Percent',
+          payeeApplyType: 'com:Inclusive'
         }],
         asset: listingUrl + '#asset',
         assetHash: assetHash,
