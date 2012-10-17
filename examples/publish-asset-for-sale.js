@@ -144,7 +144,8 @@ assetRegistration.run = function() {
         asset: listingUrl + '#asset',
         assetHash: assetHash,
         license: 'http://purl.org/payswarm/licenses/blogging',
-        licenseHash: 'ad8f72fcb47e867231d957c0bffb4c02d275926a',
+        licenseHash: 'urn:sha256:' +
+          '068663468cfa0c2559c3e7cbaf685077ac4b8271978a64f77c74d502829f7472',
         validFrom: payswarm.w3cDate(validFrom),
         validUntil: payswarm.w3cDate(validUntil),
       };
