@@ -164,7 +164,7 @@ assetRegistration.run = function() {
       }, callback);
     },
     function(receipt, callback) {
-      if(receipt.type && receipt.type === 'ps:Receipt') {
+      if(receipt && receipt.type && receipt.type === 'ps:Receipt') {
         if(verbose) {
           console.log('purchase-asset - Purchase successful:',
             JSON.stringify(receipt, null, 2));
@@ -179,7 +179,7 @@ assetRegistration.run = function() {
       }
       else
       {
-        callback(new Error("[purchase-asset.js] " +
+        callback(new Error("[purchase-asset.js] receipt:" +
           JSON.stringify(receipt, null, 2)));
       }
     }], function(err) {
