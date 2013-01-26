@@ -1,6 +1,6 @@
 {
   "name": "payswarm",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "PaySwarm Authority client library.",
   "homepage": "http://github.com/digitalbazaar/payswarm.js",
   "license": "BSD",
@@ -31,10 +31,9 @@
   },
   "dependencies": {
     "async": "~0.1.22",
-    "node-forge": "git://github.com/digitalbazaar/forge.git",
     "jsonld": "git://github.com/digitalbazaar/jsonld.js.git",
     "request": "~2.11.0",
-    "rsa": "~0.0.3"
+    "ursa": "v0.8.0"
   },
   "devDependencies": {
     "commander": "~1.0.0",
