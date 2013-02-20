@@ -39,7 +39,6 @@ var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
 var prompt = require('prompt');
 var request = require('request');
-var jsonld = require('jsonld');
 
 var assetRegistration = {};
 
@@ -132,24 +131,6 @@ assetRegistration.run = function() {
     function(callback) {
       // Step #1: Retrieve the listing from the Web
       payswarm.getJsonLd(cfg.listingUrl, {cache: true}, callback);
-    },
-    function(data, callback) {
-      // extract only the listing from the retrieved data
-      var listingFrame = {
-        '@context': payswarm.createDefaultJsonLdContext(),
-        type: 'ps:Listing',
-        asset: {'@embed': false},
-        license: {'@embed': false},
-        signature: {'@embed': true}
-      };
-      jsonld.frame(data, listingFrame, callback);
-    },
-    function(framedListing, callback) {
-      // FIXME: validate listing
-      // extract the listing from the JSON-LD object and set a @context
-      var listing = framedListing['@graph'][0];
-      listing['@context'] = 'http://purl.org/payswarm/v1';
-      callback(null, listing);
     },
     function(listing, callback) {
       // Step #2: Send a purchase request for the listing
