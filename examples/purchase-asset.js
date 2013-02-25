@@ -137,7 +137,7 @@ assetRegistration.run = function() {
       // extract only the listing from the retrieved data
       var listingFrame = {
         '@context': payswarm.createDefaultJsonLdContext(),
-        type: 'ps:Listing',
+        type: 'Listing',
         asset: {'@embed': false},
         license: {'@embed': false},
         signature: {'@embed': true}
@@ -164,7 +164,7 @@ assetRegistration.run = function() {
       }, callback);
     },
     function(receipt, callback) {
-      if(receipt && receipt.type && receipt.type === 'ps:Receipt') {
+      if(receipt && receipt.type && receipt.type === 'Receipt') {
         if(verbose) {
           console.log('purchase-asset - Purchase successful:',
             JSON.stringify(receipt, null, 2));

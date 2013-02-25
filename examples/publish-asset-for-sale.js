@@ -89,7 +89,7 @@ assetRegistration.run = function() {
       var asset = {
         '@context': 'http://purl.org/payswarm/v1',
         id: assetUrl + '#asset',
-        type: ['ps:Asset', 'pto:WebPage'],
+        type: ['Asset', 'pto:WebPage'],
         creator: {
           fullName: 'publish-asset-for-sale.js Example'
         },
@@ -117,29 +117,29 @@ assetRegistration.run = function() {
       validUntil.setFullYear(validFrom.getFullYear() + 1);
 
       // Step #2: Create and digitally sign the listing
-      console.log("Generating listing...");
+      console.log('Generating listing...');
       var listingUrl = listingService + 'payswarm.js/' + assetId;
 
       var listing = {
         '@context': 'http://purl.org/payswarm/v1',
         id: listingUrl + '#listing',
-        type: ['ps:Listing', 'gr:Offering'],
+        type: ['Listing', 'gr:Offering'],
         payee: [{
           id: listingUrl + '#listing-payee-1',
-          type: 'com:Payee',
+          type: 'Payee',
           destination: cfg.source,
           payeeGroup: ['vendor'],
           payeeRate: price,
-          payeeRateType: 'com:FlatAmount',
-          payeeApplyType: 'com:Exclusive',
+          payeeRateType: 'FlatAmount',
+          payeeApplyType: 'ApplyExclusively',
           comment: 'Payment for Test Asset ' + assetId + '.'
         }],
         payeeRule : [{
-          type: 'com:PayeeRule',
+          type: 'PayeeRule',
           payeeGroupPrefix: ['authority'],
           maximumPayeeRate: '10.0000000',
-          payeeRateType: 'com:Percent',
-          payeeApplyType: 'com:Inclusive'
+          payeeRateType: 'Percentage',
+          payeeApplyType: 'ApplyInclusively'
         }],
         asset: listingUrl + '#asset',
         assetHash: assetHash,
