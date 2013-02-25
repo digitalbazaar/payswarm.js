@@ -133,24 +133,6 @@ assetRegistration.run = function() {
       // Step #1: Retrieve the listing from the Web
       payswarm.getJsonLd(cfg.listingUrl, {cache: true}, callback);
     },
-    function(data, callback) {
-      // extract only the listing from the retrieved data
-      var listingFrame = {
-        '@context': payswarm.createDefaultJsonLdContext(),
-        type: 'Listing',
-        asset: {'@embed': false},
-        license: {'@embed': false},
-        signature: {'@embed': true}
-      };
-      jsonld.frame(data, listingFrame, callback);
-    },
-    function(framedListing, callback) {
-      // FIXME: validate listing
-      // extract the listing from the JSON-LD object and set a @context
-      var listing = framedListing['@graph'][0];
-      listing['@context'] = 'http://purl.org/payswarm/v1';
-      callback(null, listing);
-    },
     function(listing, callback) {
       // Step #2: Send a purchase request for the listing
       payswarm.purchase(listing, {
@@ -164,7 +146,7 @@ assetRegistration.run = function() {
       }, callback);
     },
     function(receipt, callback) {
-      if(receipt && receipt.type && receipt.type === 'Receipt') {
+      if(receipt && receipt.type && receipt.type === 'ps:Receipt') {
         if(verbose) {
           console.log('purchase-asset - Purchase successful:',
             JSON.stringify(receipt, null, 2));
