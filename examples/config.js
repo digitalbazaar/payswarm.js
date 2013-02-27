@@ -49,7 +49,7 @@ api.readConfigFile = function(cfgFilename, callback) {
   var cfg = {};
 
   // add the default context to the object
-  cfg['@context'] = 'http://purl.org/payswarm/v1',
+  cfg['@context'] = 'https://w3id.org/payswarm/v1',
 
   // attempt to read data from the config file
   fs.readFile(cfgFilename, 'utf8', function(err, data) {

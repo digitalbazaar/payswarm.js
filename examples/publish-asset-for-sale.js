@@ -87,7 +87,7 @@ assetRegistration.run = function() {
       console.log("Generating asset...");
       var assetUrl = listingService + 'payswarm.js/' + assetId;
       var asset = {
-        '@context': 'http://purl.org/payswarm/v1',
+        '@context': 'https://w3id.org/payswarm/v1',
         id: assetUrl + '#asset',
         type: ['Asset', 'pto:WebPage'],
         creator: {
@@ -121,7 +121,7 @@ assetRegistration.run = function() {
       var listingUrl = listingService + 'payswarm.js/' + assetId;
 
       var listing = {
-        '@context': 'http://purl.org/payswarm/v1',
+        '@context': 'https://w3id.org/payswarm/v1',
         id: listingUrl + '#listing',
         type: ['Listing', 'gr:Offering'],
         payee: [{
@@ -144,7 +144,7 @@ assetRegistration.run = function() {
         }],
         asset: listingUrl + '#asset',
         assetHash: assetHash,
-        license: 'http://purl.org/payswarm/licenses/blogging',
+        license: 'https://w3id.org/payswarm/licenses/blogging',
         licenseHash: 'urn:sha256:' +
           '068663468cfa0c2559c3e7cbaf685077ac4b8271978a64f77c74d502829f7472',
         validFrom: payswarm.w3cDate(validFrom),
@@ -162,7 +162,7 @@ assetRegistration.run = function() {
     function(signedAsset, signedListing, callback) {
       // Step #3: Register the signed asset and listing
       var assetAndListing = {
-        '@context': 'http://purl.org/payswarm/v1',
+        '@context': 'https://w3id.org/payswarm/v1',
         '@graph': [signedAsset, signedListing]
       };
 
