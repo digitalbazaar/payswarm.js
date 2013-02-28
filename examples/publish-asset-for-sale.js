@@ -128,7 +128,7 @@ assetRegistration.run = function() {
           id: listingUrl + '#listing-payee-1',
           type: 'Payee',
           destination: cfg.source,
-          currency: 'usd',
+          currency: 'USD',
           payeeGroup: ['vendor'],
           payeeRate: price,
           payeeRateType: 'FlatAmount',
