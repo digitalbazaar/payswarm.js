@@ -49,13 +49,13 @@ keyRegistration.run = function() {
     .option('--config <configfile>',
       'The file containing the public & private keys (default: payswarm.cfg).')
     .option('--authority <authority_url>',
-      'The base URL for the PaySwarm Authority (default: http://dev.payswarm.com/)')
+      'The base URL for the PaySwarm Authority (default: https://dev.payswarm.com/)')
     .parse(process.argv);
 
   // initialize settings
   var cfgFile = program.config || 'payswarm.cfg';
   var cfg = {};
-  var payswarmAuthority = program.authority || 'http://dev.payswarm.com/';
+  var payswarmAuthority = program.authority || 'https://dev.payswarm.com/';
 
   /*
    * To register a key, the following steps must be performed:

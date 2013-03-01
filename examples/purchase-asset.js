@@ -146,7 +146,7 @@ assetRegistration.run = function() {
       }, callback);
     },
     function(receipt, callback) {
-      if(receipt && receipt.type && receipt.type === 'ps:Receipt') {
+      if(receipt && receipt.type && receipt.type === 'Receipt') {
         if(verbose) {
           console.log('purchase-asset - Purchase successful:',
             JSON.stringify(receipt, null, 2));
