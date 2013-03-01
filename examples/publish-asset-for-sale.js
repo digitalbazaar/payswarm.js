@@ -146,7 +146,7 @@ assetRegistration.run = function() {
         assetHash: assetHash,
         license: 'https://w3id.org/payswarm/licenses/blogging',
         licenseHash: 'urn:sha256:' +
-          '068663468cfa0c2559c3e7cbaf685077ac4b8271978a64f77c74d502829f7472',
+          'd9dcfb7b3ba057df52b99f777747e8fe0fc598a3bb364e3d3eb529f90d58e1b9',
         validFrom: payswarm.w3cDate(validFrom),
         validUntil: payswarm.w3cDate(validUntil),
       };
