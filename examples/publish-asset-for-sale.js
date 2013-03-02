@@ -96,6 +96,7 @@ assetRegistration.run = function() {
         title: assetName,
         assetContent: assetUrl,
         assetProvider: cfg.owner,
+        vendor: cfg.owner
       };
 
       // sign the asset
@@ -124,6 +125,7 @@ assetRegistration.run = function() {
         '@context': 'https://w3id.org/payswarm/v1',
         id: listingUrl + '#listing',
         type: ['Listing', 'gr:Offering'],
+        vendor: cfg.owner,
         payee: [{
           id: listingUrl + '#listing-payee-1',
           type: 'Payee',
