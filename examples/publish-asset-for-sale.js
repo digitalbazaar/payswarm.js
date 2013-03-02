@@ -69,6 +69,13 @@ assetRegistration.run = function() {
   var listingService = program.listingService || 'http://listings.dev.payswarm.com/';
   var verbose = program.verbose || false;
 
+  // generate the asset and listing validity dates (use the same ones in
+  // this simple example, but an asset may have a validity range that is
+  // larger than the listing's)
+  var validFrom = new Date();
+  var validUntil = new Date();
+  validUntil.setFullYear(validFrom.getFullYear() + 1);
+
   /*
    * To publish an asset for sale, the following steps must be performed:
    *
@@ -96,7 +103,9 @@ assetRegistration.run = function() {
         title: assetName,
         assetContent: assetUrl,
         assetProvider: cfg.owner,
-        vendor: cfg.owner
+        vendor: cfg.owner,
+        validFrom: payswarm.w3cDate(validFrom),
+        validUntil: payswarm.w3cDate(validUntil)
       };
 
       // sign the asset
@@ -112,11 +121,6 @@ assetRegistration.run = function() {
       });
     },
     function(signedAsset, assetHash, callback) {
-      // generate the listing validity dates
-      var validFrom = new Date();
-      var validUntil = new Date();
-      validUntil.setFullYear(validFrom.getFullYear() + 1);
-
       // Step #2: Create and digitally sign the listing
       console.log('Generating listing...');
       var listingUrl = listingService + 'payswarm.js/' + assetId;
@@ -150,7 +154,7 @@ assetRegistration.run = function() {
         licenseHash: 'urn:sha256:' +
           'd9dcfb7b3ba057df52b99f777747e8fe0fc598a3bb364e3d3eb529f90d58e1b9',
         validFrom: payswarm.w3cDate(validFrom),
-        validUntil: payswarm.w3cDate(validUntil),
+        validUntil: payswarm.w3cDate(validUntil)
       };
 
       // sign the listing
