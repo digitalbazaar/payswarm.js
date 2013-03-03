@@ -103,9 +103,11 @@ assetRegistration.run = function() {
         title: assetName,
         assetContent: assetUrl,
         assetProvider: cfg.owner,
-        vendor: cfg.owner,
-        validFrom: payswarm.w3cDate(validFrom),
-        validUntil: payswarm.w3cDate(validUntil)
+        listingRestrictions: {
+          vendor: cfg.owner,
+          validFrom: payswarm.w3cDate(validFrom),
+          validUntil: payswarm.w3cDate(validUntil)
+        }
       };
 
       // sign the asset
