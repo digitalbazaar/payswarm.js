@@ -106,7 +106,29 @@ assetRegistration.run = function() {
         listingRestrictions: {
           vendor: cfg.owner,
           validFrom: payswarm.w3cDate(validFrom),
-          validUntil: payswarm.w3cDate(validUntil)
+          validUntil: payswarm.w3cDate(validUntil),
+          payee: [{
+            id: assetUrl + '#asset-payee-1',
+            type: 'Payee',
+            destination: cfg.source,
+            currency: 'USD',
+            payeeGroup: ['assetProvider'],
+            payeeRate: '80',
+            payeeRateType: 'Percentage',
+            payeeApplyType: 'ApplyInclusively',
+            payeeApplyGroup: ['vendor'],
+            minimumAmount: '0.01',
+            comment: 'Asset Provider Royalty'
+          }],
+          payeeRule: [{
+            type: 'PayeeRule',
+            payeeGroupPrefix: ['authority']
+          }, {
+            type: 'PayeeRule',
+            payeeGroup: ['vendor'],
+            payeeRateType: 'FlatAmount',
+            payeeApplyType: 'ApplyExclusively'
+          }]
         }
       };
 
@@ -141,12 +163,12 @@ assetRegistration.run = function() {
           payeeRate: price,
           payeeRateType: 'FlatAmount',
           payeeApplyType: 'ApplyExclusively',
-          comment: 'Payment for Test Asset ' + assetId + '.'
+          comment: 'Payment for selling Test Asset ' + assetId + '.'
         }],
         payeeRule : [{
           type: 'PayeeRule',
           payeeGroupPrefix: ['authority'],
-          maximumPayeeRate: '10.0000000',
+          maximumPayeeRate: '10',
           payeeRateType: 'Percentage',
           payeeApplyType: 'ApplyInclusively'
         }],
