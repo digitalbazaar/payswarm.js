@@ -104,7 +104,6 @@ assetRegistration.run = function() {
         assetContent: assetUrl,
         assetProvider: cfg.owner,
         listingRestrictions: {
-          vendor: cfg.owner,
           validFrom: payswarm.w3cDate(validFrom),
           validUntil: payswarm.w3cDate(validUntil),
           payee: [{
