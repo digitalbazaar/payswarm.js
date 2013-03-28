@@ -154,7 +154,7 @@ function _unbufferedReadFromStdin(callback) {
       callback(null, JSON.parse(input));
     }
   });
-};
+}
 
 process.on('uncaughtException', function(err) {
   // log uncaught exception and exit
