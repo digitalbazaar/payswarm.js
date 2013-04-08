@@ -38,8 +38,6 @@ var program = require('commander');
 var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
 var prompt = require('prompt');
-var request = require('request');
-var jsonld = require('jsonld');
 
 var assetRegistration = {};
 

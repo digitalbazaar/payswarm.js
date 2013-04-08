@@ -37,10 +37,6 @@ var async = require('async');
 var program = require('commander');
 var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
-var path = require('path');
-var fs = require('fs');
-var querystring = require('querystring');
-var request = require('request');
 
 var assetRegistration = {};
 
