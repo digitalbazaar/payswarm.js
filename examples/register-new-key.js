@@ -33,17 +33,18 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+var URL = require('url');
 var async = require('async');
-var program = require('commander');
 var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
-var URL = require('url');
+var pkginfo = require('pkginfo')(module, 'version');
+var program = require('commander');
 
 var keyRegistration = {};
 
 keyRegistration.run = function() {
   program
-    .version('1.0.0')
+    .version(module.exports.version)
     // setup the command line options
     .option('--config <configfile>',
       'The file containing the public & private keys (default: payswarm.cfg).')

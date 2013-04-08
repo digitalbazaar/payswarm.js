@@ -34,16 +34,17 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 var async = require('async');
-var program = require('commander');
 var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
+var pkginfo = require('pkginfo')(module, 'version');
+var program = require('commander');
 var prompt = require('prompt');
 
 var assetRegistration = {};
 
 assetRegistration.run = function() {
   program
-    .version('1.0.0')
+    .version(module.exports.version)
     // setup the command line options
     .option('--config <configfile>',
       'The configuration containing public/private keys.')
