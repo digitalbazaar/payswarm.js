@@ -21,10 +21,6 @@
     "email" : "support@digitalbazaar.com",
     "url" : "http://digitalbazaar.com/"
   },
-  "contributors": [{
-    "name" : "Dave Longley",
-    "email" : "dlongley@digitalbazaar.com"
-  }],
   "bugs": {
     "url": "https://github.com/digitalbazaar/payswarm.js/issues",
     "email": "support@digitalbazaar.com"
