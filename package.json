@@ -30,13 +30,13 @@
     "email": "support@digitalbazaar.com"
   },
   "dependencies": {
-    "async": "~0.1.22",
-    "jsonld": "git://github.com/digitalbazaar/jsonld.js.git",
-    "request": "~2.11.0",
-    "ursa": "v0.8.0"
+    "async": "~0.2.6",
+    "jsonld": "~0.0.46",
+    "pkginfo": "~0.3.0",
+    "ursa": "~0.8.0"
   },
   "devDependencies": {
-    "commander": "~1.0.0",
+    "commander": "~1.1.0",
     "prompt": "=0.2.2"
   },
   "engines": {
