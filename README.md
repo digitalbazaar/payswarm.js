@@ -1,37 +1,36 @@
 payswarm.js
 ===========
 
-The PaySwarm Client API enables software to interact with a PaySwarm
-Authority. This includes registering public/private keypairs,
-performing purchases, depositing money, and withdrawing money into a 
-bank account.
+The PaySwarm Client API enables software to interact with a [PaySwarm][]
+Authority. This includes registering public/private keypairs, performing
+purchases, depositing money, and withdrawing money into a bank account.
 
-When writing software intended to act as a PaySwarm Buyer
-(something that makes purchases on the Web) or PaySwarm Vendor
-(something that sells stuff on the Web), the developer must do the following:
+When writing software intended to act as a PaySwarm Buyer (something that
+makes purchases on the Web) or PaySwarm Vendor (something that sells stuff
+on the Web), the developer must do the following:
 
 1. Implement application-specific hooks for fetching documents from the Web,
    caching those documents, and storing sensitive data.
 2. Create a white-list of all trusted PaySwarm Authorities.
 3. Implement the public/private key-pair creation and registration UI.
-4. If creating buyer software, implement the software purchasing UI 
-   and calls to process the purchase via a PaySwarm Authority.
-5. If creating vendor software, implement the software sales UI, 
-   asset and listing creation UI, and all the calls to initiate a purchase
-   via a PaySwarm Authority.
+4. If creating buyer software, implement the software purchasing UI and
+   calls to process the purchase via a PaySwarm Authority.
+5. If creating vendor software, implement the software sales UI, asset and
+   listing creation UI, and all the calls to initiate a purchase via a
+   PaySwarm Authority.
 
 Implementing Hooks
 ------------------
 
-Various hooks will be triggered when making calls to the API. Most of the 
-hooks involve providing the API with a custom mechanism for doing HTTP 
-GET/POST and storing/retrieving data from a database. 
-It is also highly recommended that the optional cache hooks be
-implemented to prevent excessive network traffic when looking up PaySwarm
-Authority configurations and public keys. To implement a hook, simply write
-a function that takes the appropriate parameters and returns the appropriate
-values. Then pass the hook name and the name of the custom function to
-'payswarm.addHook'. Look below for the specific hooks that must be implemented.
+Various hooks will be triggered when making calls to the API. Most of the
+hooks involve providing the API with a custom mechanism for doing HTTP
+GET/POST and storing/retrieving data from a database.  It is also highly
+recommended that the optional cache hooks be implemented to prevent
+excessive network traffic when looking up PaySwarm Authority configurations
+and public keys. To implement a hook, simply write a function that takes the
+appropriate parameters and returns the appropriate values. Then pass the
+hook name and the name of the custom function to 'payswarm.addHook'. Look
+below for the specific hooks that must be implemented.
 
 Importing the Client
 --------------------
@@ -52,7 +51,7 @@ payswarm.addTrustedAuthority('trustedauthority:port');
 ```
 
 In this version of the API, any PaySwarm Authority that the software will
-interact with must be manually added. A vendor's chosen PaySwarm Authority 
+interact with must be manually added. A vendor's chosen PaySwarm Authority
 will be automatically added during the registration step. In the future,
 there will be a registry of trusted PaySwarm Authorities.
 
@@ -63,9 +62,9 @@ Performing a Purchase
 Vendor Registration
 -------------------
 
-If you are implementing a website that will operate as a PaySwarm Vendor
-(a piece of software that is selling something on the Web), you may 
-register the vendor by calling:
+If you are implementing a website that will operate as a PaySwarm Vendor (a
+piece of software that is selling something on the Web), you may register
+the vendor by calling:
 
 ```javascript
 var url = payswarm.getRegisterVendorUrl(
@@ -82,8 +81,8 @@ Direct the vendor to the URL so that they can complete the registration
 process. Once the registration process is complete, the vendor's browser
 will POST the registration result to the callback URL provided.
 
-On the callback page, get the POST value 'encrypted-message' and pass it
-to register the vendor:
+On the callback page, get the POST value 'encrypted-message' and pass it to
+register the vendor:
 
 ```javascript
 payswarm.registerVendor(req.body['encrypted-message'], callback);
@@ -123,8 +122,8 @@ payswarm.sign(listing, callback);
 Performing a Vendor-initiated Purchase
 --------------------------------------
 
-When a customer indicates that they want to purchase the Asset in a 
-Listing, call:
+When a customer indicates that they want to purchase the Asset in a Listing,
+call:
 
 ```javascript
 var url = payswarm.getPurchaseUrl(
@@ -169,5 +168,14 @@ payswarm.getReceipt(encryptedMessage, callback);
 Where encryptedMessage is either the result of a POST to the purchase
 callback or the result of the `payswarm.purchase()` call.
 
-The receipt will indicate the ID and hash of the Asset purchased as well
-as the ID and hash of the License for the Asset.
+The receipt will indicate the ID and hash of the Asset purchased as well as
+the ID and hash of the License for the Asset.
+
+Authors
+-------
+
+This software was written by [Digital Bazaar][] and friends. Please see the
+AUTHORS file for full credits.
+
+[PaySwarm]: http://payswarm.com/
+[Digital Bazaar]: http://digitalbazaar.com/
