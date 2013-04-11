@@ -75,7 +75,7 @@ keyRegistration.run = function() {
       // Step #1: Generate a public/private keypair (or use an existing one).
       if(!('publicKey' in cfg)) {
         console.log("Generating new public/private keypair...");
-        payswarm.createKeyPair({keySize: 2048}, function(err, pair) {
+        payswarm.createKeyPair(function(err, pair) {
           // update the configuration object with the new key info
           cfg.publicKey = {};
           cfg.publicKey.publicKeyPem = pair.publicKey;
