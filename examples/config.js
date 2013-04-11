@@ -34,6 +34,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 var fs = require('fs');
+var payswarm = require('../lib/payswarm-client.js');
 
 var api = {};
 module.exports = api;
@@ -49,7 +50,7 @@ api.readConfigFile = function(cfgFilename, callback) {
   var cfg = {};
 
   // add the default context to the object
-  cfg['@context'] = 'https://w3id.org/payswarm/v1',
+  cfg['@context'] = payswarm.CONTEXT_URL,
 
   // attempt to read data from the config file
   fs.readFile(cfgFilename, 'utf8', function(err, data) {

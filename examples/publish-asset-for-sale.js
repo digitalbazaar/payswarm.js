@@ -91,7 +91,7 @@ assetRegistration.run = function() {
       console.log("Generating asset...");
       var assetUrl = listingService + 'payswarm.js/' + assetId;
       var asset = {
-        '@context': 'https://w3id.org/payswarm/v1',
+        '@context': payswarm.CONTEXT_URL,
         id: assetUrl + '#asset',
         type: ['Asset', 'pto:WebPage'],
         creator: {
@@ -146,7 +146,7 @@ assetRegistration.run = function() {
       var listingUrl = listingService + 'payswarm.js/' + assetId;
 
       var listing = {
-        '@context': 'https://w3id.org/payswarm/v1',
+        '@context': payswarm.CONTEXT_URL,
         id: listingUrl + '#listing',
         type: ['Listing', 'gr:Offering'],
         vendor: cfg.owner,
@@ -188,7 +188,7 @@ assetRegistration.run = function() {
     function(signedAsset, signedListing, callback) {
       // Step #3: Register the signed asset and listing
       var assetAndListing = {
-        '@context': 'https://w3id.org/payswarm/v1',
+        '@context': payswarm.CONTEXT_URL,
         '@graph': [signedAsset, signedListing]
       };
 
