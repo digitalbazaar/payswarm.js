@@ -136,13 +136,14 @@ assetRegistration.run = function() {
     },
     function(signedAsset, callback) {
       // generate a hash for the signed asset
+      console.log("Signing asset...");
       payswarm.hash(signedAsset, function(err, assetHash) {
         callback(err, signedAsset, assetHash);
       });
     },
     function(signedAsset, assetHash, callback) {
       // Step #2: Create and digitally sign the listing
-      console.log('Generating listing...');
+      console.log('Generating and signing listing...');
       var listingUrl = listingService + 'payswarm.js/' + assetId;
 
       var listing = {
@@ -187,6 +188,7 @@ assetRegistration.run = function() {
     },
     function(signedAsset, signedListing, callback) {
       // Step #3: Register the signed asset and listing
+      console.log("Register signed asset and listing...");
       var assetAndListing = {
         '@context': payswarm.CONTEXT_URL,
         '@graph': [signedAsset, signedListing]
