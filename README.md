@@ -175,13 +175,15 @@ Authors
 -------
 
 This software was written by [Digital Bazaar][] and friends. Please see the
-AUTHORS file for full credits.
+[AUTHORS][] file for full credits.
 
 License
 -------
 
 The payswarm.js code, tools, and examples are available under a BSD 3-Clause
-License. Please see the LICENSE file for full details.
+License. Please see the [LICENSE][] file for full details.
 
 [PaySwarm]: http://payswarm.com/
 [Digital Bazaar]: http://digitalbazaar.com/
+[AUTHORS]: AUTHORS
+[LICENSE]: LICENSE
