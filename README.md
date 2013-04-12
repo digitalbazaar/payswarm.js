@@ -5,6 +5,17 @@ The [PaySwarm][] Client API enables software to interact with a PaySwarm
 Authority. This includes registering public/private keypairs, performing
 purchases, depositing money, and withdrawing money into a bank account.
 
+Installation
+------------
+
+payswarm.js is available via github and npm:
+
+* github: https://github.com/digitalbazaar/payswarm.js
+* npm: https://npmjs.org/package/payswarm
+
+Starting
+--------
+
 When writing software intended to act as a PaySwarm Buyer (something that
 makes purchases on the Web) or PaySwarm Vendor (something that sells stuff
 on the Web), the developer must do the following:
