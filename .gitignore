@@ -1,3 +1,7 @@
-*~
+*.cfg
 *.sw[op]
+*~
+.cproject
+.project
+.settings
 node_modules
