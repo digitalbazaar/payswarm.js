@@ -1,6 +1,6 @@
 {
   "name": "payswarm",
-  "version": "0.9.3",
+  "version": "0.10.0",
   "description": "PaySwarm Authority client library.",
   "homepage": "http://github.com/digitalbazaar/payswarm.js",
   "license": "BSD",
