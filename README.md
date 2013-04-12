@@ -1,7 +1,7 @@
 payswarm.js
 ===========
 
-The PaySwarm Client API enables software to interact with a [PaySwarm][]
+The [PaySwarm][] Client API enables software to interact with a PaySwarm
 Authority. This includes registering public/private keypairs, performing
 purchases, depositing money, and withdrawing money into a bank account.
 
