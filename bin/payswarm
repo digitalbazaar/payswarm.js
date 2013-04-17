@@ -39,6 +39,7 @@ var common = require('../tools/common');
 function init(options) {
   // load sub-tools
   var tools = [
+    'info',
     'url'
   ];
 
