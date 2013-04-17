@@ -120,11 +120,9 @@ function url(url, cmd) {
       if(data) {
         opts.body = JSON.stringify(data);
       }
-      common.request(cmd, url, opts, function(err, res, data) {
-        callback(err, cfg, data);
-      })
+      common.request(cmd, url, opts, callback);
     },
-    function(cfg, data, callback) {
+    function(res, data, callback) {
       common.output(cmd, data, callback);
       callback();
     },
