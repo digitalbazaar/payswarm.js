@@ -154,8 +154,8 @@ function request(cmd, loc, options, callback) {
   // FIXME: add an option to follow redirects
   options.followRedirect = false;
 
-  // add default headers if none specified
-  if(!options.httpSignature || !options.httpSignature.headers) {
+  // if using http signature, add default headers if none specified
+  if(options.httpSignature && !options.httpSignature.headers) {
     options.httpSignature = options.httpSignature || {};
     options.httpSignature.headers = ['request-line', 'host', 'date'];
   }
