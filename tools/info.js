@@ -51,6 +51,7 @@ function init(options) {
     .option('    --assets', 'show only Assets [false]')
     .option('    --licenses', 'show only Licenses [false]')
     .option('    --listings', 'show only Listings [false]')
+    .option('    --raw', 'show compacted raw JSON-LD [false]')
     .option('    --framed', 'show framed JSON-LD [true]')
     .option('    --hash', 'show JSON-LD hahes [true]')
     .option('    --normalized', 'show normalized N-Quads [false]')
@@ -61,11 +62,12 @@ function init(options) {
       console.log('  be stdin, a file, or a HTTP/HTTPS resource.')
       console.log();
       console.log('  By default the full resource and common PaySwarm types');
-      console.log('  are processed.');
+      console.log('  are processed unless explicit options are specified.');
       console.log();
       console.log('  The framed JSON-LD and hashes are output by default');
-      console.log('  unless explicit --framed, --hash, or --normalized are');
-      console.log('  present.');
+      console.log('  unless --framed, --hash, or --normalized are specified.');
+      console.log();
+      console.log('  Also see the jsonld tool from the jsonld.js project.');
       console.log();
     });
 }
@@ -78,6 +80,7 @@ function info(loc, cmd) {
     function(cfg, callback) {
       cmd.base = cmd.base || '';
 
+      // data type options
       cmd.all = !!cmd.all;
       cmd.full = !!cmd.full || cmd.all;
       cmd.assets = !!cmd.assets || cmd.all;
@@ -88,6 +91,8 @@ function info(loc, cmd) {
         cmd.full = cmd.assets = cmd.licenses = cmd.listings = true;
       }
 
+      // output options
+      cmd.raw = !!cmd.raw;
       cmd.framed = !!cmd.framed;
       cmd.hash = !!cmd.hash;
       cmd.normalized = !!cmd.normalized;
@@ -103,6 +108,21 @@ function info(loc, cmd) {
         }
         callback(err, data);
       });
+    },
+    function(data, callback) {
+      if(cmd.raw) {
+        var ctx = payswarm.CONTEXT_URL;
+        return jsonld.compact(data, ctx, function(err, compacted) {
+          console.log('Raw:');
+          common.output(cmd, compacted, function(err) {
+            if(err) {
+              return callback(err);
+            }
+            callback(null, data);
+          });
+        });
+      }
+      callback(null, data);
     },
     function(data, callback) {
       if(cmd.all || cmd.full) {
