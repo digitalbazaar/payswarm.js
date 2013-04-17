@@ -36,7 +36,6 @@
 var URL = require('url');
 var async = require('async');
 var common = require('./common');
-var fs = require('fs');
 var payswarm = require('..');
 
 function init(options) {
