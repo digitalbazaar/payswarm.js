@@ -40,6 +40,7 @@ function init(options) {
   // load sub-tools
   var tools = [
     'info',
+    'keys',
     'url'
   ];
 
