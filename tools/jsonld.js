@@ -1,6 +1,5 @@
-#!/usr/bin/env node
 /**
- * PaySwarm all-in-one tool.
+ * PaySwarm tool shared configured JSON-LD module.
  *
  * Copyright (c) 2011-2013, Digital Bazaar, Inc.
  * All rights reserved.
@@ -34,21 +33,15 @@
 
 'use strict';
 
-var common = require('../tools/common');
+var jsonld = require('jsonld')(); // use localized jsonld API
+var payswarm = require('../lib/payswarm-client');
 
-function init(options) {
-  // load sub-tools
-  var tools = [
-  ];
+jsonld.loadContext = payswarm.loadJsonLdContext;
+jsonld.use('request');
 
-  tools.forEach(function(tool) {
-    require('../tools/' + tool).init({
-      program: options.program
-    });
-  });
+module.exports = jsonld;
+
+if(require.main === module) {
+  console.error('Error: This is a library for use with other tools.');
+  process.exit(1);
 }
-
-common.tool({
-  init: init,
-  topLevel: true
-});
