@@ -33,11 +33,13 @@
 
 'use strict';
 
+var URL = require('url');
 var async = require('async');
-var jsonld = require('./jsonld');
-var util = require('util');
-var payswarm = require('..');
 var common = require('./common');
+var jsonld = require('./jsonld');
+var path = require('path');
+var payswarm = require('..');
+var util = require('util');
 
 function init(options) {
   var cmd = options.program
@@ -49,18 +51,17 @@ function init(options) {
     .option('    --id <id>', 'id to use [access key owner]')
     .option('-l, --list', 'list keys [true]')
     .option('-r, --register', 'register new key [false]')
+    .option('    --overwrite', 'overwrite config file with new key [false]')
     .action(keys);
 }
 
 function keys(key, cmd) {
   var single = (typeof key !== 'undefined');
   async.auto({
-    config: function(callback) {
-      common.command.config(cmd, callback);
-    },
-    init: ['config', function(callback, results) {
+    init: function(callback, results) {
       cmd.list = !!cmd.list;
       cmd.register = !!cmd.register;
+      cmd.overwrite = !!cmd.overwrite;
 
       var count = (single + cmd.list + cmd.register);
       if(count > 1) {
@@ -72,14 +73,8 @@ function keys(key, cmd) {
         cmd.list = true;
       }
 
-      // default id to key owner from config
-      cmd.id = cmd.id || results.config.owner;
-
-      // FIXME: allow short ids
-      // FIXME: check cross authority id
-
       callback(null);
-    }],
+    },
     single: ['init', function(callback, results) {
       if(!single) {
         return callback(null);
@@ -99,37 +94,151 @@ function keys(key, cmd) {
       register(cmd, callback);
     }],
   }, function(err) {
-    if(err) {
-      common.error(cmd, err);
-    }
+    common.error(err);
   });
 }
 
 function list(cmd, key, callback) {
-  // FIXME: make into common short id helper
-  // all keys by default
-  var url = cmd.id + '/keys';
-  if(key !== null) {
-    // check for full key
-    if(key.indexOf('http://') === 0 || key.indexOf('https://') === 0) {
-      url = key;
-    }
-    // else a short id
-    else {
-      url = url + '/' + key;
-    }
-  }
+  async.waterfall([
+    function(callback) {
+      common.config.read(cmd, callback);
+    },
+    function(cfg, callback) {
+      // default id to key owner from config
+      cmd.id = cmd.id || cfg.owner;
 
-  common.request(cmd, url, function(err, res, result) {
-    if(err) {
-      return callback(err);
-    }
-    common.output(cmd, result, callback);
-  })
+      if(!cmd.id) {
+        return callback(new Error('No id or key owner found.'));
+      }
+
+      var url = common.makeId(cmd.id + '/keys', key);
+      // FIXME: check cross authority id
+
+      common.request(cmd, url, callback);
+    },
+    function(res, result, callback) {
+      common.output(cmd, result, callback);
+    },
+  ], function(err) {
+    common.error(err);
+    callback()
+  });
 }
 
 function register(cmd, callback) {
-  callback(new Error('Register not implemented yet.'));
+  /*
+   * To register a key, the following steps must be performed:
+   *
+   * 1. Generate a public/private keypair (or use an existing one).
+   * 2. Fetch the Web Keys registration endpoint from the PaySwarm Authority.
+   * 3. Generate the key registration URL and go to it in a browser.
+   * 4. Get the new key information and provide it to the program.
+   */
+  async.auto({
+    config: function(callback) {
+      // read the config file
+      common.config.read(cmd, {strict: false}, callback);
+    },
+    configCheck: ['config', function(callback, results) {
+      // early check for overwrite option if file exists
+      if(!cmd.overwrite) {
+        return path.exists(cmd.config, function(exists) {
+          if(exists) {
+            return callback(new Error('Config exists: ' + cmd.config));
+          }
+          callback(null);
+        });
+      }
+      callback(null);
+    }],
+    keys: ['configCheck', function(callback, results) {
+      // Step #1: Generate a public/private keypair (or use an existing one).
+      if(!('publicKey' in results.config)) {
+        console.log('Generating new public/private keypair...');
+        payswarm.createKeyPair(function(err, pair) {
+          // update the configuration object with the new key info
+          results.config.publicKey = {};
+          results.config.publicKey.publicKeyPem = pair.publicKey;
+          results.config.publicKey.privateKeyPem = pair.privateKey;
+        });
+      }
+      else {
+        callback(null);
+      }
+    }],
+    endpoints: ['configCheck', function(callback, results) {
+      // Step #2: Fetch the Web Keys endpoint from the PaySwarm Authority.
+      var webKeysUrl = URL.parse(results.config.authority, true, true);
+      var options = common.requestOptions(cmd);
+      payswarm.getWebKeysConfig(webKeysUrl.host, options, callback);
+    }],
+    encryptedMessage: ['keys', 'endpoints', function(callback, results) {
+      // Step #3: Generate the key registration URL
+      var registrationUrl =
+        URL.parse(results.endpoints.publicKeyService, true, true);
+      registrationUrl.query['public-key'] =
+        results.config.publicKey.publicKeyPem;
+      registrationUrl.query['response-nonce'] =
+        new Date().getTime().toString(16);
+      delete registrationUrl.search;
+      registrationUrl = URL.format(registrationUrl);
+      console.log(
+        'To register your new key, go to this URL using a Web browser:\n',
+        registrationUrl);
+
+      // read the encrypted message from the command line
+      // NOTE: Cannot use buffered input as it is limited to 4096 bytes
+      //       and encrypted messages are usually greater than that size.
+      console.log('Then, enter the encrypted registration message:');
+      _unbufferedReadFromStdin(callback);
+    }],
+    message: ['encryptedMessage', function(callback, results) {
+      payswarm.decrypt(results.encryptedMessage, {
+        privateKey: results.config.publicKey.privateKeyPem
+      }, callback);
+    }],
+    updateConfig: ['message', function(callback, results) {
+      // Step #4: Get the new key information
+      results.config.publicKey.id = results.message.publicKey;
+      results.config.owner = results.message.owner;
+      results.config.source = results.message.destination;
+      callback();
+    }],
+    writeConfig: ['updateConfig', function(callback, results) {
+      common.config.write(cmd, results.config, {overwrite: true}, callback);
+    }],
+    done: ['updateConfig', function(callback, results) {
+      console.log('Completed registration of new public key:');
+      console.log('   Public Key Owner :', results.config.owner);
+      console.log('   Financial Account:', results.config.source);
+      console.log('   Public Key URL   :', results.config.publicKey.id);
+      callback();
+    }]
+  }, function(err) {
+    common.error(err);
+    callback();
+  });
+}
+
+/**
+ * Reads from stdin in an unbuffered way. This is necessary in order to
+ * capture lines that are greater than 4096 characters in length.
+ *
+ * @param callback(err, data) called when a newline character is detected.
+ */
+function _unbufferedReadFromStdin(callback) {
+  process.stdin.resume();
+  var input = '';
+  require('tty').setRawMode(true);
+  process.stdin.on('keypress', function(chunk, key) {
+    input += chunk;
+    process.stdout.write(chunk);
+    if(key && key.name == 'enter') {
+      process.stdout.write('\n\n');
+      process.stdin.pause();
+      callback(null, JSON.parse(input));
+    }
+  });
 }
 
 module.exports = {
