@@ -75,7 +75,7 @@ function init(options) {
 function info(loc, cmd) {
   async.waterfall([
     function(callback) {
-      common.command.readConfig(cmd, callback);
+      common.config.read(cmd, callback);
     },
     function(cfg, callback) {
       cmd.base = cmd.base || '';

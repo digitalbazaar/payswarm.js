@@ -65,7 +65,7 @@ function init(options) {
 function url(url, cmd) {
   async.waterfall([
     function(callback) {
-      common.command.config(cmd, callback);
+      common.config.read(cmd, callback);
     },
     function(cfg, callback) {
       if(!cmd.crossAuthority) {

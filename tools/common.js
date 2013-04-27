@@ -34,7 +34,10 @@
 'use strict';
 
 var async = require('async');
+var fs = require('fs');
 var jsonld = require('./jsonld');
+var path = require('path');
+var payswarm = require('..');
 var pkginfo = require('pkginfo')(module, 'version');
 var program = require('commander');
 
@@ -98,20 +101,40 @@ function init(cmd) {
     .option('-y, --yes', 'always confirm with \'yes\' [false]')
     .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
     .option('-N, --no-newline', 'do not output the trailing newline [newline]')
-    .option('-k, --insecure', 'allow insecure SSL connections [false]');
+    .option('-k, --insecure', 'allow insecure SSL connections [false]')
+    .on('--help', function() {
+      console.log();
+      console.log(
+'  Config file precedence: --config option, PAYSWARM_CONFIG environment\n' +
+'  variable, or the default config.');
+      console.log();
+      console.log(
+'  Authority URL precedence: --authority option, config file property,\n' +
+'  PAYSWARM_AUTHORITY environment variable, or the default authority.');
+      console.log();
+    });
   return cmd;
 };
 
 /**
- * Load a config.
+ * Read a config.
  *
  * @param cmd a commander.js command
+ * @param options read options (optional):
+ *          strict: config must exist [true if file given, false if default]
  * @param callback function(err, config) called when done with any error or a
  *          config
  */
-function config(cmd, callback) {
-  var cfgloc = cmd.config || DEFAULT_CONFIG;
+function readConfig(cmd, options, callback) {
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  if(!('strict' in options)) {
+    options.strict = !!cmd.config
+  }
 
+  cmd.config = cmd.config || DEFAULT_CONFIG;
   cmd.verbose = !!cmd.verbose;
   cmd.quiet = !!cmd.quiet;
   cmd.yes = !!cmd.yes;
@@ -119,13 +142,26 @@ function config(cmd, callback) {
 
   async.waterfall([
     function(callback) {
-      request(cmd, cfgloc, callback);
+      request(cmd, cmd.config, function(err, res, cfg) {
+        if(err) {
+          if(err.code && err.code === 'ENOENT' && !options.strict) {
+            err = null;
+            cfg = {
+              '@context': payswarm.CONTEXT_URL
+            };
+          }
+        }
+        callback(err, res, cfg)
+      });
     },
     function(res, cfg, callback) {
-      cfg.authority = cmd.authority || DEFAULT_AUTHORITY;
+      cfg.authority = cmd.authority || cfg.authority || DEFAULT_AUTHORITY;
       callback(null, cfg);
     }
   ], function(err, cfg) {
+    if(err) {
+      return callback(err);
+    }
     if(cmd.verbose) {
       console.log('I: config=' + JSON.stringify(cfg, null, cmd.indent));
     }
@@ -134,11 +170,83 @@ function config(cmd, callback) {
 }
 
 /**
+ * Write a config.
+ *
+ * @param cmd a commander.js command
+ * @param config the config to write
+ * @param loc the location to write to
+ * @param options write options (optional):
+ *          overwrite: overwrite an existing file [false]
+ * @param callback function(err, config) called when done with any error or a
+ *          config
+ */
+function writeConfig(cmd, cfg, options, callback) {
+  if(typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  options.overwrite = !!options.overwrite;
+
+  async.waterfall([
+    function(callback) {
+      if(!options.overwrite) {
+        return path.exists(cmd.config, function(exists) {
+          if(exists) {
+            return callback(new Error('Config exists: ' + cmd.config));
+          }
+          callback(null);
+        });
+      }
+      callback(null);
+    },
+    function(callback) {
+      fs.writeFile(cmd.config, JSON.stringify(cfg, null, 2), callback);
+    }
+  ], function(err) {
+    if(err) {
+      return callback(err);
+    }
+    if(cmd.verbose) {
+      console.log('I: writeConfig file=' + cmd.config);
+    }
+    callback(null);
+  });
+}
+
+/**
+ * Build a request options object.
+ *
+ * @param cmd a commander.js command
+ * @param options default options. (optional)
+ *
+ * @return options for a request
+ */
+function requestOptions(cmd, options) {
+  options = options || {};
+
+  if(!('strictSSL' in options)) {
+    options.strictSSL = !cmd.insecure;
+  }
+
+  // FIXME: document followRedirct option
+  options.followRedirect = !!options.followRedirect;
+
+  // if using http signature, add default headers if none specified
+  if(options.httpSignature && !options.httpSignature.headers) {
+    options.httpSignature = options.httpSignature || {};
+    options.httpSignature.headers = ['request-line', 'host', 'date'];
+  }
+
+  return options;
+}
+
+
+/**
  * Wrapper for jsonld.request that handles common options.
  *
  * @param cmd a commander.js command
  * @param loc the URL to use
- * @param options options for jsonld.request
+ * @param options options for jsonld.request (optional)
  * @param callback function(err, res, result) called when done with any error,
  *          the response object, and the result
  */
@@ -147,19 +255,10 @@ function request(cmd, loc, options, callback) {
     callback = options;
     options = {};
   }
-  if(!('strictSSL' in options)) {
-    options.strictSSL = !cmd.insecure;
-  }
 
-  // FIXME: add an option to follow redirects
-  options.followRedirect = false;
+  options = requestOptions(cmd, options);
 
-  // if using http signature, add default headers if none specified
-  if(options.httpSignature && !options.httpSignature.headers) {
-    options.httpSignature = options.httpSignature || {};
-    options.httpSignature.headers = ['request-line', 'host', 'date'];
-  }
-  // FIXME: use payswarm.get/postJsonLd instead?
+  // FIXME: use payswarm.get/postJsonLd instead
   jsonld.request(loc, options, callback);
 }
 
@@ -206,9 +305,13 @@ function error(err) {
 module.exports = {
   tool: tool,
   command: {
-    init: init,
-    config: config
+    init: init
   },
+  config: {
+    read: readConfig,
+    write: writeConfig
+  },
+  requestOptions: requestOptions,
   request: request,
   output: output,
   error: error
