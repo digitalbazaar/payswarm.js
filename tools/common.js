@@ -263,6 +263,35 @@ function request(cmd, loc, options, callback) {
 }
 
 /**
+ * Make an ID from a given input.
+ *
+ * This function can build an ID out of:
+ *   falsy: use base ID
+ *   url: use explicit URL
+ *   short ID: add short ID onto base ID
+ *
+ * @param base a base ID used as a default or prefix for short ID input
+ * @param input the input full or short ID or falsy value
+ *
+ * @return the new ID
+ */
+function makeId(base, input) {
+  // check if not falsy
+  if(input) {
+    // check for full id
+    if(input.indexOf('http://') === 0 || input.indexOf('https://') === 0) {
+      return input;
+    }
+    // else a short id
+    else {
+      return base + '/' + input;
+    }
+  }
+
+  return base;
+}
+
+/**
  * Print an object using common options.
  *
  * @param cmd a commander.js command
@@ -313,6 +342,7 @@ module.exports = {
   },
   requestOptions: requestOptions,
   request: request,
+  makeId: makeId,
   output: output,
   error: error
 };
