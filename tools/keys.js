@@ -137,6 +137,5 @@ module.exports = {
 };
 
 if(require.main === module) {
-  console.error('Error: Run this tool with the payswarm application.');
-  process.exit(1);
+  common.error('Run this tool with the payswarm application.');
 }

@@ -75,7 +75,7 @@ function init(options) {
 function info(loc, cmd) {
   async.waterfall([
     function(callback) {
-      common.command.config(cmd, callback);
+      common.command.readConfig(cmd, callback);
     },
     function(cfg, callback) {
       cmd.base = cmd.base || '';
@@ -149,9 +149,7 @@ function info(loc, cmd) {
       callback(null, data);
     }
   ], function(err) {
-    if(err) {
-      common.error(cmd, err);
-    }
+    common.error(err);
   });
 }
 
@@ -228,6 +226,5 @@ module.exports = {
 };
 
 if(require.main === module) {
-  console.error('Error: Run this tool with the payswarm application.');
-  process.exit(1);
+  common.error('Run this tool with the payswarm application.');
 }

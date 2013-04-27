@@ -179,24 +179,26 @@ function output(cmd, data, callback) {
 }
 
 /**
- * Print an error and exit.
+ * If an error given, print it and exit, else no action.
  *
- * @param cmd a commander.js command
- * @param err the error to print
- * @param callback function(err) called when done with any error
+ * @param err the error to print or null
  */
-function error(cmd, err) {
+function error(err) {
+  if(!err) {
+    return;
+  }
+  var prefix = 'Error:'
   if(err instanceof Error) {
-    console.error('E:', JSON.stringify(err, null, 2));
+    console.error(prefix, JSON.stringify(err, null, 2));
     if(err.stack) {
-      console.error('E:', err.stack);
+      console.error(prefix, err.stack);
     }
   }
   else if(typeof err === 'object') {
-    console.error('E:', JSON.stringify(err, null, 2));
+    console.error(prefix, JSON.stringify(err, null, 2));
   }
   else {
-    console.error('E:', err);
+    console.error(prefix, err);
   }
   process.exit(1);
 }
@@ -213,6 +215,5 @@ module.exports = {
 };
 
 if(require.main === module) {
-  console.error('Error: This is a library for use with other tools.');
-  process.exit(1);
+  error('This is a library for use with other tools.');
 }
