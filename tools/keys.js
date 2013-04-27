@@ -160,6 +160,7 @@ function register(cmd, callback) {
           results.config.publicKey = {};
           results.config.publicKey.publicKeyPem = pair.publicKey;
           results.config.publicKey.privateKeyPem = pair.privateKey;
+          callback(null);
         });
       }
       else {
