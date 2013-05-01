@@ -114,7 +114,7 @@ function init(cmd) {
       console.log();
     });
   return cmd;
-};
+}
 
 /**
  * Read a config.
@@ -131,7 +131,7 @@ function readConfig(cmd, options, callback) {
     options = {};
   }
   if(!('strict' in options)) {
-    options.strict = !!cmd.config
+    options.strict = !!cmd.config;
   }
 
   cmd.config = cmd.config || DEFAULT_CONFIG;
@@ -151,7 +151,7 @@ function readConfig(cmd, options, callback) {
             };
           }
         }
-        callback(err, res, cfg)
+        callback(err, res, cfg);
       });
     },
     function(res, cfg, callback) {
@@ -315,7 +315,7 @@ function error(err) {
   if(!err) {
     return;
   }
-  var prefix = 'Error:'
+  var prefix = 'Error:';
   if(err instanceof Error) {
     console.error(prefix, JSON.stringify(err, null, 2));
     if(err.stack) {

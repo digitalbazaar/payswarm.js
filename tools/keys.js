@@ -92,7 +92,7 @@ function keys(key, cmd) {
         return callback(null);
       }
       register(cmd, callback);
-    }],
+    }]
   }, function(err) {
     common.error(err);
   });
@@ -118,10 +118,10 @@ function list(cmd, key, callback) {
     },
     function(res, result, callback) {
       common.output(cmd, result, callback);
-    },
+    }
   ], function(err) {
     common.error(err);
-    callback()
+    callback();
   });
 }
 

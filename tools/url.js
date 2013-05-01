@@ -51,7 +51,7 @@ function init(options) {
     .action(url)
     .on('--help', function() {
       console.log();
-      console.log('  WARNING: Be careful with this tool!')
+      console.log('  WARNING: Be careful with this tool!');
       console.log();
       console.log('  Raw authority access with the REST PaySwarm protocol.');
       console.log('  You can perform low-level actions with proper use of');
@@ -108,7 +108,7 @@ function url(url, cmd) {
           keyId: cfg.publicKey.id,
           key: cfg.publicKey.privateKeyPem
         }
-      }
+      };
       // default to POST if --data used
       if(cmd.data) {
         opts.method = 'POST';
@@ -125,7 +125,7 @@ function url(url, cmd) {
     function(res, data, callback) {
       common.output(cmd, data, callback);
       callback();
-    },
+    }
   ], function(err) {
     common.error(err);
   });

@@ -58,8 +58,8 @@ function init(options) {
     .action(info)
     .on('--help', function() {
       console.log();
-      console.log('  Displays information from a resource. The location can')
-      console.log('  be stdin, a file, or a HTTP/HTTPS resource.')
+      console.log('  Displays information from a resource. The location can');
+      console.log('  be stdin, a file, or a HTTP/HTTPS resource.');
       console.log();
       console.log('  By default the full resource and common PaySwarm types');
       console.log('  are processed unless explicit options are specified.');
