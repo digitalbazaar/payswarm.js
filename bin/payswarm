@@ -41,6 +41,7 @@ function init(options) {
   var tools = [
     'info',
     'keys',
+    'purchase',
     'url'
   ];
 
