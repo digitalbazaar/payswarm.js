@@ -13,8 +13,62 @@ payswarm.js is available via github and npm:
 * github: https://github.com/digitalbazaar/payswarm.js
 * npm: https://npmjs.org/package/payswarm
 
-Starting
---------
+Command Line Tool
+-----------------
+
+A tool is included that allows command line access to various PaySwarm
+Authority features. For a list of tools and tool help, use the following:
+
+    ./bin/payswarm -h
+    ./bin/payswarm {toolname} -h
+
+Most tools require authorization via an access key that is based on a public
+and private keypair. This key, the associated authority URL, and other
+values are stored in a configuration file. Tools allow you to select the
+active config file so you may have multiple keys from a single or many
+authorities.
+
+After you have created an identity on an authority you can generate and
+register an access key:
+
+    ./bin/payswarm keys -r -a {authority-url}
+
+Without the `-a` option this will default to the sandbox authority. Use the
+`-c` option with any tool if you wish to specify a config file other than
+`payswarm.cfg`.  Once you have an access key, the tools will use this to
+authorize you to an authority.
+
+To list your keys, show a key by id, or show a key by short id:
+
+    ./bin/payswarm keys
+    ./bin/payswarm keys https://example.com/i/{my-id}/1
+    ./bin/payswarm keys 1
+
+To perform a purchase of a listing (**NOTE**: This performs a real purchase
+using a real account!):
+
+    ./bin/payswarm purchase {listing-url}
+
+Developers may be interested in the curl-like tool used to perform
+authorized raw REST access on authority URLs. The HTTP method and body data
+can be specified. (**NOTE**: This tool performs raw PaySwarm Authority
+access without user friendly guidance or confirmations. Be careful!) For
+example, to get your accounts:
+
+    ./bin/payswarm url https://example.com/i/{my-id}/accounts
+
+A tool useful for development is the `info` tool. It will print out framed
+assets, licenses, listings, and hashes:
+
+    ./bin/payswarm info {listing-url}
+
+The `jsonld` tool from the [jsonld.js][] project can be useful for more
+advanced JSON-LD manipulation:
+
+    ./bin/payswarm keys 1 | jsonld normalize -q
+
+API Introduction
+----------------
 
 When writing software intended to act as a PaySwarm Buyer (something that
 makes purchases on the Web) or PaySwarm Vendor (something that sells stuff
@@ -198,3 +252,4 @@ License. Please see the [LICENSE][] file for full details.
 [Digital Bazaar]: http://digitalbazaar.com/
 [AUTHORS]: AUTHORS
 [LICENSE]: LICENSE
+[jsonld.js]: https://github.com/digitalbazaar/jsonld.js
