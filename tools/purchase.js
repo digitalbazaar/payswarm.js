@@ -126,7 +126,43 @@ function purchase(listing, cmd) {
       options.cache = true;
       payswarm.getJsonLd(results.listingUrl, options, callback);
     }],
-    purchase: ['config', 'source', 'listing', function(callback, results) {
+    confirm: ['config', 'source', 'listing', function(callback, results) {
+      if(cmd.yes) {
+        callback(null, true);
+      }
+      // quick details
+      console.log('Listing ID:', results.listingUrl);
+      console.log('Source Account ID:', results.source);
+      // FIXME: Get quote and output amount and/or other details
+      //console.log('Amount: %s %s',
+      //  results.quote.currency, results.quote.amount);
+      prompt.start();
+      prompt.get({
+        properties: {
+          confirm: {
+            description: 'Perform purchase?',
+            pattern: '^(yes|y|true|t|1|no|n|false|f|0)$',
+            default: 'no',
+            required: true
+          }
+        }
+      }, function(err, results) {
+        if(err) {
+          return callback(err);
+        }
+        try {
+          callback(null, common.boolify(results.confirm));
+        }
+        catch(ex) {
+          callback(ex);
+        }
+      });
+    }],
+    purchase: ['confirm', function(callback, results) {
+      if(!results.confirm) {
+        // skip purchase
+        return callback();
+      }
       // Step #2: Send a purchase request for the listing
       payswarm.purchase(results.listing, {
         // FIXME: URL should be retrieved via a .well-known/payswarm method
@@ -141,7 +177,14 @@ function purchase(listing, cmd) {
     }],
     receipt: ['purchase', function(callback, results) {
       var receipt = results.purchase;
-      if(receipt && jsonld.hasValue(receipt, 'type', 'Receipt')) {
+      var err = null;
+      if(!results.confirm) {
+        // skip output
+      }
+      else if(!receipt) {
+        err = new Error('No receipt.');
+      }
+      else if(jsonld.hasValue(receipt, 'type', 'Receipt')) {
         // print the receipt of sale to the console
         var contract = receipt.contract;
         console.log('Successfully purchased:', contract.listing);
@@ -152,9 +195,11 @@ function purchase(listing, cmd) {
         }
       }
       else {
-        callback(new Error('Receipt:' +
+        // bad receipt
+        err = callback(new Error('Receipt:' +
           JSON.stringify(receipt, null, 2)));
       }
+      callback(err);
     }]
   }, function(err) {
     common.error(err);
