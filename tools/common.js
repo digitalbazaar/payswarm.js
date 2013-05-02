@@ -292,6 +292,39 @@ function makeId(base, input) {
 }
 
 /**
+ * Parse the string or value and return a boolean value or raise an exception.
+ * Handles true and false booleans and case-insensitive 'yes', 'no', 'true',
+ * 'false', 't', 'f', '0', '1' strings.
+ *
+ * @param value a string of value.
+ * @return the boolean conversion of the value.
+ */
+function boolify(value) {
+  if(typeof value === 'boolean') {
+    return value;
+  }
+  if(typeof value === 'string' && value) {
+    var lower = value.toLowerCase();
+    switch(value.toLowerCase()) {
+      case 'true':
+      case 't':
+      case '1':
+      case 'yes':
+      case 'y':
+        return true;
+      case 'false':
+      case 'f':
+      case '0':
+      case 'no':
+      case 'n':
+        return false;
+    }
+  }
+  // if here we couldn't parse it
+  throw new Error('Invalid boolean:' + value);
+}
+
+/**
  * Print an object using common options.
  *
  * @param cmd a commander.js command
@@ -343,6 +376,7 @@ module.exports = {
   requestOptions: requestOptions,
   request: request,
   makeId: makeId,
+  boolify: boolify,
   output: output,
   error: error
 };
