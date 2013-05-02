@@ -41,7 +41,7 @@ authorize you to an authority.
 To list your keys, show a key by id, or show a key by short id:
 
     ./bin/payswarm keys
-    ./bin/payswarm keys https://example.com/i/{my-id}/1
+    ./bin/payswarm keys https://example.com/i/{my-id}/keys/1
     ./bin/payswarm keys 1
 
 To perform a purchase of a listing (**NOTE**: This performs a real purchase
@@ -53,7 +53,7 @@ Developers may be interested in the curl-like tool used to perform
 authorized raw REST access on authority URLs. The HTTP method and body data
 can be specified. (**NOTE**: This tool performs raw PaySwarm Authority
 access without user friendly guidance or confirmations. Be careful!) For
-example, to get your accounts:
+example, to get all of your account details in JSON-LD format:
 
     ./bin/payswarm url https://example.com/i/{my-id}/accounts
 
@@ -63,7 +63,8 @@ assets, licenses, listings, and hashes:
     ./bin/payswarm info {listing-url}
 
 The `jsonld` tool from the [jsonld.js][] project can be useful for more
-advanced JSON-LD manipulation:
+advanced JSON-LD manipulation. To print key details in normalized N-Quads
+format:
 
     ./bin/payswarm keys 1 | jsonld normalize -q
 
