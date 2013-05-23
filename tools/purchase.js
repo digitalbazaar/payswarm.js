@@ -127,15 +127,15 @@ function purchase(listing, cmd) {
       payswarm.getJsonLd(results.listingUrl, options, callback);
     }],
     confirm: ['config', 'source', 'listing', function(callback, results) {
-      if(cmd.yes) {
-        callback(null, true);
-      }
       // quick details
       console.log('Listing ID:', results.listingUrl);
       console.log('Source Account ID:', results.source);
       // FIXME: Get quote and output amount and/or other details
       //console.log('Amount: %s %s',
       //  results.quote.currency, results.quote.amount);
+      if(cmd.yes) {
+        return callback(null, true);
+      }
       prompt.start();
       prompt.get({
         properties: {
