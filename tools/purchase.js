@@ -163,6 +163,15 @@ function purchase(listing, cmd) {
         // skip purchase
         return callback();
       }
+      // authenticate so we get a full receipt
+      // FIXME: add option to not authenticate
+      // FIXME: move this into purchase call?
+      var requestOptions = common.requestOptions(cmd, {
+        httpSignature: {
+          keyId: results.config.publicKey.id,
+          key: results.config.publicKey.privateKeyPem
+        }
+      });
       // Step #2: Send a purchase request for the listing
       payswarm.purchase(results.listing, {
         // FIXME: URL should be retrieved via a .well-known/payswarm method
@@ -172,7 +181,7 @@ function purchase(listing, cmd) {
         publicKey: results.config.publicKey.id,
         privateKeyPem: results.config.publicKey.privateKeyPem,
         verbose: cmd.verbose,
-        request: common.requestOptions(cmd)
+        request: requestOptions
       }, callback);
     }],
     receipt: ['purchase', function(callback, results) {
