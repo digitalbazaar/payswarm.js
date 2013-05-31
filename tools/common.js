@@ -231,6 +231,7 @@ function requestOptions(cmd, options) {
   // FIXME: document followRedirct option
   options.followRedirect = !!options.followRedirect;
 
+  // FIXME: add noAuth option to skip this
   // if using http signature, add default headers if none specified
   if(options.httpSignature && !options.httpSignature.headers) {
     options.httpSignature = options.httpSignature || {};
