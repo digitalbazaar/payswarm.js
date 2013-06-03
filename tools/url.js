@@ -33,7 +33,7 @@
 
 'use strict';
 
-var URL = require('url');
+var url = require('url');
 var async = require('async');
 var common = require('./common');
 var payswarm = require('..');
@@ -48,7 +48,7 @@ function init(options) {
     .option('-X, --method <method>', 'HTTP method [GET, POST with --data]')
     .option('-d, --data <data>', 'JSON-LD string, @file for file, @- for stdin')
     .option('    --cross-authority', 'allow a cross-authority request [false]')
-    .action(url)
+    .action(url_)
     .on('--help', function() {
       console.log();
       console.log('  WARNING: Be careful with this tool!');
@@ -62,7 +62,7 @@ function init(options) {
     });
 }
 
-function url(url, cmd) {
+function url_(url, cmd) {
   async.waterfall([
     function(callback) {
       common.config.read(cmd, callback);
@@ -70,8 +70,8 @@ function url(url, cmd) {
     function(cfg, callback) {
       if(!cmd.crossAuthority) {
         // check for cross-authority request
-        var keyurl = URL.parse(cfg.publicKey.id);
-        var authurl = URL.parse(url);
+        var keyurl = url.parse(cfg.publicKey.id);
+        var authurl = url.parse(url);
         if(keyurl.host !== authurl.host && !cmd.crossAuthority) {
           var msg =
             "Cross-authority requests disabled." +
