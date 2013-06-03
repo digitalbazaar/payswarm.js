@@ -8,6 +8,7 @@ Code
 
 * In general, follow a common [Node.js Style Guide][].
 * Try to make the code pass [jshint][] checks.
+  * `npm run-script lint`
 * Use version X.Y.Z-dev in dev mode.
 * Use version X.Y.Z for releases.
 * Use simple tagging prefixes for commit messages like "[tools] ...":
