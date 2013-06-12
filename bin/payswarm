@@ -42,6 +42,7 @@ function init(options) {
     'info',
     'keys',
     'purchase',
+    'signature',
     'url'
   ];
 
