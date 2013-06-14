@@ -68,6 +68,11 @@ format:
 
     ./bin/payswarm keys 1 | jsonld normalize -q
 
+To sign or verify raw JSON-LD data, use the `signature` tool. For instance, to sign and verify a string of JSON-LD using the registered private key from a config file:
+
+    ./bin/payswarm signature --config local.cfg --sign '{"@context": "https://w3id.org/payswarm/v1", "@id": "http://example.com/id/1", "http://example.com/foo": "bar"}' | ./bin/payswarm signature --verify @-
+
+
 API Introduction
 ----------------
 
