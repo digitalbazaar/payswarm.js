@@ -33,7 +33,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 var async = require('async');
-var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
 var pkginfo = require('pkginfo')(module, 'version');
 var program = require('commander');
@@ -45,20 +44,20 @@ assetRegistration.run = function() {
   program
     .version(module.exports.version)
     // setup the command line options
-    .option('--config <configfile>',
+    .option('-c, --config <config>',
       'The configuration containing public/private keys.')
-    .option('--listing <listing_url>',
+    .option('-l, --listing <listing_url>',
       'URL for the listing to purchase.')
-    .option('--source <account_url>',
+    .option('-s, --source <account_url>',
       'URL for the financial account to use when purchasing.')
-    .option('--authority <authority_url>',
+    .option('-a, --authority <authority_url>',
       'The base URL for the authority (default: https://dev.payswarm.com/).')
-    .option('--verbose',
+    .option('-v, --verbose',
       'Print out debugging information to the console (default: false).')
     .parse(process.argv);
 
   // initialize settings
-  var cfgFile = program.config || 'payswarm.cfg';
+  var configName = program.config || null;
   var cfg = {};
   var authority = program.authority || 'https://dev.payswarm.com/';
   var verbose = program.verbose || false;
@@ -72,7 +71,13 @@ assetRegistration.run = function() {
   async.waterfall([
     function(callback) {
       // read the config file from disk
-      config.readConfigFile(cfgFile, callback);
+      payswarm.readConfig(configName, function(err, psCfg) {
+        if(err) {
+          console.log('Error: Failed to find a PaySwarm configuration file.');
+          return callback(err);
+        }
+        callback(null, psCfg);
+      });
     },
     function(newCfg, callback) {
       cfg = newCfg;

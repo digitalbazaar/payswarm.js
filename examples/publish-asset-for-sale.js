@@ -33,7 +33,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 var async = require('async');
-var config = require('./config.js');
 var payswarm = require('../lib/payswarm-client.js');
 var pkginfo = require('pkginfo')(module, 'version');
 var program = require('commander');
@@ -45,20 +44,20 @@ assetRegistration.run = function() {
   program
     .version(module.exports.version)
     // setup the command line options
-    .option('--config <configfile>',
-      'The configuration containing public/private keys (default: payswarm.cfg).')
-    .option('--asset-name <title>',
-      'The asset name (default: \'Test Asset ' + assetId + '\').')
-    .option('--price <dollars>',
-      'The price (in dollars) of the asset (default: 0.05).')
-    .option('--listing-service <listing_url>',
-      'The base URL for the listing service (default: http://listings.dev.payswarm.com/)')
-    .option('--verbose',
-      'Print more detailed program status updates (default: false).')
+    .option('-c, --config <config>',
+      'The PaySwarm configuration file. [~/.config/payswarm1/default]')
+    .option('-n, --asset-name <title>',
+      'The asset name [\'Test Asset ' + assetId + '\']')
+    .option('-p, --price <dollars>',
+      'The price (in dollars) of the asset [0.05]')
+    .option('-l, --listing-service <listing_url>',
+      'The base URL for the listing service [http://listings.dev.payswarm.com/]')
+    .option('-v, --verbose',
+      'Print more detailed program status updates [false].')
     .parse(process.argv);
 
   // initialize settings
-  var cfgFile = program.config || 'payswarm.cfg';
+  var configName = program.config || null;
   var cfg = {};
   var assetName = program.assetName || 'Test Asset ' + assetId;
   var price = program.price || '0.05';
@@ -82,7 +81,13 @@ assetRegistration.run = function() {
   async.waterfall([
     function(callback) {
       // read the config file from disk
-      config.readConfigFile(cfgFile, callback);
+      payswarm.readConfig(configName, function(err, psCfg) {
+        if(err) {
+          console.log('Error: Failed to find a PaySwarm configuration file.');
+          return callback(err);
+        }
+        callback(null, psCfg);
+      });
     },
     function(newCfg, callback) {
       cfg = newCfg;
