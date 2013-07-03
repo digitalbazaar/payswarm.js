@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "commander": "~1.1.0",
-    "prompt": "=0.2.2"
+    "prompt": "~0.2.11"
   },
   "engines": {
     "node": "*"
