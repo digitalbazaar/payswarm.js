@@ -170,7 +170,9 @@ function register(cmd, callback) {
     endpoints: ['configCheck', function(callback, results) {
       // Step #2: Fetch the Web Keys endpoint from the PaySwarm Authority.
       var webKeysUrl = URL.parse(results.config.authority, true, true);
-      var options = common.requestOptions(cmd);
+      var options = {
+        request: common.requestOptions(cmd)
+      };
       payswarm.getWebKeysConfig(webKeysUrl.host, options, callback);
     }],
     encryptedMessage: ['keys', 'endpoints', function(callback, results) {
