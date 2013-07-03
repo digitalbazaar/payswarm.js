@@ -48,7 +48,7 @@ function init(options) {
     .option('-X, --method <method>', 'HTTP method [GET, POST with --data]')
     .option('-d, --data <data>', 'JSON-LD string, @file for file, @- for stdin')
     .option('    --cross-authority', 'allow a cross-authority request [false]')
-    .action(url_)
+    .action(urlAction)
     .on('--help', function() {
       console.log();
       console.log('  WARNING: Be careful with this tool!');
@@ -62,7 +62,7 @@ function init(options) {
     });
 }
 
-function url_(url, cmd) {
+function urlAction(_url, cmd) {
   async.waterfall([
     function(callback) {
       common.config.read(cmd, callback);
@@ -71,7 +71,7 @@ function url_(url, cmd) {
       if(!cmd.crossAuthority) {
         // check for cross-authority request
         var keyurl = url.parse(cfg.publicKey.id);
-        var authurl = url.parse(url);
+        var authurl = url.parse(_url);
         if(keyurl.host !== authurl.host && !cmd.crossAuthority) {
           var msg =
             "Cross-authority requests disabled." +
@@ -100,7 +100,7 @@ function url_(url, cmd) {
       callback(null, cfg, null);
     },
     function(cfg, data, callback) {
-      if(!url) {
+      if(!_url) {
         return callback(null, cfg);
       }
       var opts = {
@@ -120,7 +120,7 @@ function url_(url, cmd) {
       if(data) {
         opts.body = JSON.stringify(data);
       }
-      common.request(cmd, url, opts, callback);
+      common.request(cmd, _url, opts, callback);
     },
     function(res, data, callback) {
       common.output(cmd, data, callback);
