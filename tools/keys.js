@@ -36,8 +36,8 @@
 var URL = require('url');
 var async = require('async');
 var common = require('./common');
+var fs = require('fs');
 var jsonld = require('./jsonld');
-var path = require('path');
 var payswarm = require('..');
 var prompt = require('prompt');
 var util = require('util');
@@ -143,7 +143,7 @@ function register(cmd, callback) {
     configCheck: ['config', function(callback, results) {
       // early check for overwrite option if file exists
       if(!cmd.overwrite) {
-        return path.exists(cmd.config, function(exists) {
+        return fs.exists(cmd.config, function(exists) {
           if(exists) {
             return callback(new Error('Config exists: ' + cmd.config));
           }

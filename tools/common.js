@@ -36,7 +36,6 @@
 var async = require('async');
 var fs = require('fs');
 var jsonld = require('./jsonld');
-var path = require('path');
 var payswarm = require('..');
 var pkginfo = require('pkginfo')(module, 'version');
 var program = require('commander');
@@ -190,7 +189,7 @@ function writeConfig(cmd, cfg, options, callback) {
   async.waterfall([
     function(callback) {
       if(!options.overwrite) {
-        return path.exists(cmd.config, function(exists) {
+        return fs.exists(cmd.config, function(exists) {
           if(exists) {
             return callback(new Error('Config exists: ' + cmd.config));
           }
