@@ -39,6 +39,7 @@ var common = require('./common');
 var jsonld = require('./jsonld');
 var path = require('path');
 var payswarm = require('..');
+var prompt = require('prompt');
 var util = require('util');
 
 function init(options) {
@@ -175,7 +176,7 @@ function register(cmd, callback) {
       };
       payswarm.getWebKeysConfig(webKeysUrl.host, options, callback);
     }],
-    encryptedMessage: ['keys', 'endpoints', function(callback, results) {
+    encryptedMessagePrompt: ['keys', 'endpoints', function(callback, results) {
       // Step #3: Generate the key registration URL
       var registrationUrl =
         URL.parse(results.endpoints.publicKeyService, true, true);
@@ -188,12 +189,23 @@ function register(cmd, callback) {
       console.log(
         'To register your new key, go to this URL using a Web browser:\n',
         registrationUrl);
-
+      callback();
+    }],
+    encryptedMessage: ['encryptedMessagePrompt', function(callback, results) {
       // read the encrypted message from the command line
-      // NOTE: Cannot use buffered input as it is limited to 4096 bytes
-      //       and encrypted messages are usually greater than that size.
-      console.log('Then, enter the encrypted registration message:');
-      _unbufferedReadFromStdin(callback);
+      prompt.start();
+      prompt.get({
+        properties: {
+          encryptedMessage: {
+            description: 'Enter the encrypted registration message:'
+          }
+        }
+      }, function(err, results) {
+        if(err) {
+          return callback(err);
+        }
+        callback(null, JSON.parse(results.encryptedMessage));
+      });
     }],
     message: ['encryptedMessage', function(callback, results) {
       payswarm.decrypt(results.encryptedMessage, {
@@ -220,27 +232,6 @@ function register(cmd, callback) {
   }, function(err) {
     common.error(err);
     callback();
-  });
-}
-
-/**
- * Reads from stdin in an unbuffered way. This is necessary in order to
- * capture lines that are greater than 4096 characters in length.
- *
- * @param callback(err, data) called when a newline character is detected.
- */
-function _unbufferedReadFromStdin(callback) {
-  process.stdin.resume();
-  var input = '';
-  require('tty').setRawMode(true);
-  process.stdin.on('keypress', function(chunk, key) {
-    input += chunk;
-    process.stdout.write(chunk);
-    if(key && key.name == 'enter') {
-      process.stdout.write('\n\n');
-      process.stdin.pause();
-      callback(null, JSON.parse(input));
-    }
   });
 }
 
