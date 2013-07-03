@@ -31,7 +31,8 @@
   },
   "dependencies": {
     "async": "~0.2.6",
-    "jsonld": "~0.0.51",
+    "jsonld": "~0.0.59",
+    "node-fs": "~0.1.6",
     "pkginfo": "~0.3.0",
     "ursa": "~0.8.0"
   },
