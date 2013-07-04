@@ -3,16 +3,20 @@
  *
  * @author Manu Sporny
  *
- * Copyright (c) 2011-2013, Digital Bazaar, Inc. All rights reserved.
+ * Copyright (c) 2011-2013, Digital Bazaar, Inc.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *  * Redistributions of source code must retain the above copyright notice,
+ *
+ * Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright notice,
+ *
+ * Redistributions in binary form must reproduce the above copyright notice,
  * this list of conditions and the following disclaimer in the documentation
  * and/or other materials provided with the distribution.
- *  * Neither the name of the Digital Bazaar, Inc. nor the names of its
+ *
+ * Neither the name of the Digital Bazaar, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from this
  * software without specific prior written permission.
  *
@@ -39,11 +43,11 @@ var keyRegistration = {};
 
 keyRegistration.run = function() {
   program.version(module.exports.version)
-  // setup the command line options
-  .option('-c, --config <config>',
-    'The PaySwarm configuration file [~/.config/payswarm1/default]').option(
-    '-a, --authority <authority>',
-    'The base URL for the PaySwarm Authority ' + '[https://dev.payswarm.com/]')
+    // setup the command line options
+    .option('-c, --config <config>',
+      'The PaySwarm configuration file [~/.config/payswarm1/default]')
+    .option('-a, --authority <authority>',
+      'The base URL for the PaySwarm Authority [https://dev.payswarm.com/]')
     .parse(process.argv);
 
   // initialize settings
@@ -54,16 +58,16 @@ keyRegistration.run = function() {
   /*
    * To register a key, the following steps must be performed:
    *
-   * 1. Generate a public/private keypair (or use an existing one). 2. Fetch the
-   * Web Keys registration endpoint from the PaySwarm Authority. 3. Generate the
-   * key registration URL and go to it in a browser. 4. Get the new key
-   * information and provide it to the program.
+   * 1. Generate a public/private keypair (or use an existing one).
+   * 2. Fetch the Web Keys registration endpoint from the PaySwarm Authority.
+   * 3. Generate the key registration URL and go to it in a browser.
+   * 4. Get the new key information and provide it to the program.
    */
   async.waterfall([
     function(callback) {
       // read the config file from disk
       payswarm.readConfig(configName, function(err, psCfg) {
-        if (err) {
+        if(err) {
           console.log(err);
         }
         callback(null, psCfg);
@@ -72,7 +76,7 @@ keyRegistration.run = function() {
     function(newCfg, callback) {
       cfg = newCfg;
       // Step #1: Generate a public/private keypair (or use an existing one).
-      if (!('publicKey' in cfg)) {
+      if(!('publicKey' in cfg)) {
         console.log("Generating new public/private keypair...");
         payswarm.createKeyPair(function(err, pair) {
           // update the configuration object with the new key info
@@ -80,7 +84,7 @@ keyRegistration.run = function() {
           cfg.publicKey.publicKeyPem = pair.publicKey;
           cfg.publicKey.privateKeyPem = pair.privateKey;
           payswarm.writeConfig(configName, cfg, function(err, configFilename) {
-            if (err) {
+            if(err) {
               return console.log(err);
             }
             callback();
@@ -97,15 +101,15 @@ keyRegistration.run = function() {
     },
     function(endpoints, callback) {
       // Step #3: Generate the key registration URL
+      var responseNonce = new Date().getTime().toString(16);
       var registrationUrl = URL.parse(endpoints.publicKeyService, true, true);
       registrationUrl.query['public-key'] = cfg.publicKey.publicKeyPem;
-      registrationUrl.query['response-nonce'] = new Date().getTime().toString(
-        16);
+      registrationUrl.query['response-nonce'] = responseNonce;
       delete registrationUrl.search;
       registrationUrl = URL.format(registrationUrl);
       console.log(
         '\nTo register your new key, go to this URL using a Web browser:\n\n' +
-        registrationUrl, '\n');
+        registrationUrl + '\n');
 
       // read the encrypted message from the command line
       prompt.start();
@@ -135,7 +139,7 @@ keyRegistration.run = function() {
       console.log('   Financial Account:', cfg.source);
       console.log('   Public Key URL   :', cfg.publicKey.id);
     } ], function(err) {
-    if (err) {
+    if(err) {
       console.log('[register-new-key] failed to register key:\n', err.stack);
     }
   });
@@ -143,9 +147,7 @@ keyRegistration.run = function() {
 
 process.on('uncaughtException', function(err) {
   // log uncaught exception and exit
-  console.log(err.toString(), err.stack ? {
-    stack : err.stack
-  } : null);
+  console.log(err.toString(), err.stack ? {stack: err.stack} : null);
   process.removeAllListeners('uncaughtException');
   process.exit();
 });
