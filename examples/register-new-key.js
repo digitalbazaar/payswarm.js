@@ -138,7 +138,7 @@ keyRegistration.run = function() {
       console.log('   Public Key Owner :', cfg.owner);
       console.log('   Financial Account:', cfg.source);
       console.log('   Public Key URL   :', cfg.publicKey.id);
-    } ], function(err) {
+    }], function(err) {
     if(err) {
       console.log('[register-new-key] failed to register key:\n', err.stack);
     }
