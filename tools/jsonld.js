@@ -36,7 +36,7 @@
 var jsonld = require('jsonld')(); // use localized jsonld API
 var payswarm = require('../lib/payswarm-client');
 
-jsonld.loadContext = payswarm.loadJsonLdContext;
+jsonld.loadDocument = payswarm.loadJsonLdDocument;
 jsonld.use('request');
 
 module.exports = jsonld;
