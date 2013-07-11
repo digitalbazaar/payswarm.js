@@ -65,9 +65,14 @@ keyRegistration.run = function() {
    */
   async.waterfall([
     function(callback) {
+      payswarm.getConfigFilename(configName, callback);
+    },
+    function(configFilename, callback) {
       // read the config file from disk
+      console.log('Reading config from: "' + configFilename + '"...');
       payswarm.readConfig(configName, function(err, psCfg) {
         if(err) {
+          // TODO: ensure config file can be written to before continuing
           console.log(err);
         }
         callback(null, psCfg);
@@ -77,7 +82,7 @@ keyRegistration.run = function() {
       cfg = newCfg;
       // Step #1: Generate a public/private keypair (or use an existing one).
       if(!('publicKey' in cfg)) {
-        console.log("Generating new public/private keypair...");
+        console.log('Generating new public/private keypair...');
         payswarm.createKeyPair(function(err, pair) {
           // update the configuration object with the new key info
           cfg.publicKey = {};
@@ -121,23 +126,31 @@ keyRegistration.run = function() {
           }
         }
       }, callback);
-    }, function(message, callback) {
+    },
+    function(message, callback) {
       var encryptedMessage = JSON.parse(message.data);
       payswarm.decrypt(encryptedMessage, {
         privateKey : cfg.publicKey.privateKeyPem
       }, callback);
-    }, function(message, callback) {
+    },
+    function(message, callback) {
       // Step #4: Get the new key information
       cfg.publicKey.id = message.publicKey;
       cfg.owner = message.owner;
       cfg.source = message.destination;
       callback();
-    }, function(callback) {
-      payswarm.writeConfig(configName, cfg, callback);
+    },
+    function(callback) {
+      payswarm.writeConfig(configName, cfg, function(err, configFilename) {
+        callback(err, configFilename, cfg);
+      });
+    },
+    function(configFilename, cfg, callback) {
       console.log('Completed registration of new public key:');
       console.log('   Public Key Owner :', cfg.owner);
       console.log('   Financial Account:', cfg.source);
       console.log('   Public Key URL   :', cfg.publicKey.id);
+      console.log('Config written to: "' + configFilename + '"');
     }], function(err) {
     if(err) {
       console.log('[register-new-key] failed to register key:\n', err.stack);
