@@ -46,6 +46,7 @@ function init(options) {
     .command
     .init(cmd)
     .option('    --base-uri <base>', 'base URI to use []')
+    .option('    --context <context>', 'context used to expand data []')
     .option('    --all', 'show full and all sub-resources [true]')
     .option('    --full', 'show full resource [false]')
     .option('    --assets', 'show only Assets [false]')
@@ -79,6 +80,7 @@ function info(loc, cmd) {
     },
     function(cfg, callback) {
       cmd.base = cmd.base || '';
+      cmd.context = cmd.context || null;
 
       // data type options
       cmd.all = !!cmd.all;
@@ -112,7 +114,11 @@ function info(loc, cmd) {
     function(data, callback) {
       if(cmd.raw) {
         var ctx = payswarm.CONTEXT_URL;
-        return jsonld.compact(data, ctx, function(err, compacted) {
+        var opts = {
+          base: cmd.base,
+          expandContext: cmd.context
+        };
+        return jsonld.compact(data, ctx, opts, function(err, compacted) {
           console.log('Raw:');
           common.output(cmd, compacted, function(err) {
             if(err) {
@@ -170,11 +176,14 @@ function processType(data, type, cmd, callback) {
         }));
       }
       var frame = frames[type];
+      var opts = {
+        base: cmd.base
+      };
       if(cmd.verbose) {
         console.log('Frame[%s]:\n%s',
           type || '*', JSON.stringify(frame, null, 2));
       }
-      jsonld.frame(data, frame, {base: cmd.base}, function(err, framed) {
+      jsonld.frame(data, frame, opts, function(err, framed) {
         if(err) {
           return callback(err);
         }
@@ -202,7 +211,10 @@ function processType(data, type, cmd, callback) {
     },
     function(data, callback) {
       if(cmd.normalized) {
-        var opts = {base: cmd.base, format: 'application/nquads'};
+        var opts = {
+          base: cmd.base,
+          format: 'application/nquads'
+        };
         return jsonld.normalize(data, opts, function(err, normalized) {
           if(err) {
             return callback(err);
