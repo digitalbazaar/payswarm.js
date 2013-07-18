@@ -109,7 +109,7 @@ Importing the Client
 At the top of your implementation, require the PaySwarm Client API:
 
 ```javascript
-var payswarm = require('payswarm-client');
+var payswarm = require('payswarm');
 ```
 
 Adding Trusted PaySwarm Authorities
