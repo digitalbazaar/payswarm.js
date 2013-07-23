@@ -56,6 +56,7 @@ function init(options) {
     .option('    --framed', 'show framed JSON-LD [true]')
     .option('    --hash', 'show JSON-LD hahes [true]')
     .option('    --normalized', 'show normalized N-Quads [false]')
+    .option('    --validate', 'show simple hash validation [false]')
     .action(info)
     .on('--help', function() {
       console.log();
@@ -68,17 +69,30 @@ function init(options) {
       console.log('  The framed JSON-LD and hashes are output by default');
       console.log('  unless --framed, --hash, or --normalized are specified.');
       console.log();
+      console.log('  The --validate option will show results of a simple');
+      console.log('  check of hashes found at this resouce.');
+      console.log();
       console.log('  Also see the jsonld tool from the jsonld.js project.');
       console.log();
     });
 }
 
 function info(loc, cmd) {
-  async.waterfall([
-    function(callback) {
+  // cache of hashes and data types for validation
+  var cache = {
+    hashes: {
+      // id: hash
+    },
+    resources: {
+      // type: [{}, ...]
+    }
+  };
+
+  async.auto({
+    config: function(callback) {
       common.config.read(cmd, callback);
     },
-    function(cfg, callback) {
+    data: ['config', function(callback, results) {
       cmd.base = cmd.base || '';
       cmd.context = cmd.context || null;
 
@@ -98,72 +112,190 @@ function info(loc, cmd) {
       cmd.framed = !!cmd.framed;
       cmd.hash = !!cmd.hash;
       cmd.normalized = !!cmd.normalized;
+      cmd.validate = !!cmd.validate;
       // enable framed and hash display if none explicitly enabled
       if(!cmd.framed && !cmd.hash && !cmd.normalized) {
         cmd.framed = cmd.hash = true;
       }
 
-      console.log('Location:\n%s', (loc || '[stdin]'));
+      console.log('= Location');
+      console.log('%s', loc || '[stdin]');
       common.request(cmd, loc, function(err, res, data) {
         if(err) {
           return callback(err);
         }
         callback(err, data);
       });
-    },
-    function(data, callback) {
+    }],
+    raw: ['data', function(callback, results) {
       if(cmd.raw) {
         var ctx = payswarm.CONTEXT_URL;
         var opts = {
           base: cmd.base,
           expandContext: cmd.context
         };
-        return jsonld.compact(data, ctx, opts, function(err, compacted) {
-          console.log('Raw:');
+        return jsonld.compact(results.data, ctx, opts,
+          function(err, compacted) {
+          console.log('\n= Raw');
           common.output(cmd, compacted, function(err) {
             if(err) {
               return callback(err);
             }
-            callback(null, data);
+            callback(null);
           });
         });
       }
-      callback(null, data);
-    },
-    function(data, callback) {
+      callback(null);
+    }],
+    doc: ['data', 'raw', function(callback, results) {
       if(cmd.all || cmd.full) {
-        return processType(data, null, cmd, callback);
+        return processOne(results.data, null, cache, cmd, callback);
       }
-      callback(null, data);
-    },
-    function(data, callback) {
+      callback(null);
+    }],
+    assets: ['data', 'doc', function(callback, results) {
       if(cmd.all || cmd.assets) {
-        return processType(data, 'Asset', cmd, callback);
+        return processAll(results.data, 'Asset', cache, cmd, callback);
       }
-      callback(null, data);
-    },
-    function(data, callback) {
+      callback(null);
+    }],
+    licenses: ['data', 'assets', function(callback, results) {
       if(cmd.all || cmd.licenses) {
-        return processType(data, 'License', cmd, callback);
+        return processAll(results.data, 'License', cache, cmd, callback);
       }
-      callback(null, data);
-    },
-    function(data, callback) {
+      callback(null);
+    }],
+    listings: ['data', 'licenses', function(callback, results) {
       if(cmd.all || cmd.listings) {
-        return processType(data, 'Listing', cmd, callback);
+        return processAll(results.data, 'Listing', cache, cmd, callback);
       }
-      callback(null, data);
-    }
-  ], function(err) {
+      callback(null);
+    }],
+    validate: ['data', 'listings', function(callback, results) {
+      if(!cmd.validate) {
+        return callback(null);
+      }
+      // simple hash validation
+      // tri-state: valid, invalid, or unknown
+      var valid = true;
+      var invalid = false;
+      console.log('\n= Validate');
+
+      var check = function(listing, type, id, hash) {
+        if(id in cache.hashes) {
+          var cachedHash = cache.hashes[id];
+          if(cachedHash !== hash) {
+            console.log('== ERROR: %s hash mismatch!', type);
+            console.log('=== Listing id: %s', listing.id);
+            console.log('=== %s id: %s', type, id);
+            console.log('=== Hash in listing: %s', hash);
+            console.log('=== Computed hash: %s', cachedHash);
+            invalid = true;
+          }
+        }
+        else {
+          console.log('== NOTE: %s hash not found.', type);
+          console.log('=== %s: %s', type, id);
+          valid = false;
+        }
+      };
+
+      // check type
+      var listings = cache.resources.Listing || [];
+      listings.forEach(function(listing) {
+        check(listing, 'Asset', listing.asset, listing.assetHash);
+      });
+      var licenses = cache.resources.Licence || [];
+      licenses.forEach(function(license) {
+        check(licence, 'License', listing.license, listing.licenseHash);
+      });
+
+      // results
+      var msg = 'YES';
+      if(invalid) {
+        msg = 'NO unless referenced data hashes are already available.';
+      }
+      else if(!valid) {
+        msg = 'UNKNOWN because not all hashes were found. This may be OK.';
+      }
+      console.log('== valid: %s', msg);
+
+      callback(null);
+    }]
+  }, function(err) {
     common.error(err);
   });
 }
 
-function processType(data, type, cmd, callback) {
+function processOne(data, type, cache, cmd, callback) {
+  async.waterfall([
+    function(callback) {
+      if(type) {
+        var r = cache.resources[type] || [];
+        r.push(data);
+        cache.resources[type] = r;
+      }
+      return payswarm.hash(data, function(err, hash) {
+        if(err) {
+          // FIXME: better handling of empty hash
+          //return callback(err);
+        }
+        // record hash for id if possible
+        if(data.id && hash) {
+          cache.hashes[data.id] = hash;
+        }
+        callback(null, hash);
+      });
+    },
+    function(hash, callback) {
+      if(cmd.hash) {
+        console.log('\n= Hash');
+        if(type) {
+          console.log('== type: %s', type);
+          console.log('== id: %s', data.id || '[none]');
+        }
+        else {
+          console.log('== id: %s', data.id || '[document]');
+        }
+        console.log('%s', hash || '[none]');
+      }
+      callback(null, data);
+    },
+    function(data, callback) {
+      if(cmd.normalized) {
+        var opts = {
+          base: cmd.base,
+          format: 'application/nquads'
+        };
+        return jsonld.normalize(data, opts, function(err, normalized) {
+          if(err) {
+            return callback(err);
+          }
+          console.log('\n= Normalized');
+          console.log('== type: %s', type || '[none]');
+          console.log('== id: %s', data.id || '[none]');
+          console.log('%s', normalized.trim() || '[none]');
+          callback(null, data);
+        });
+      }
+      callback(null);
+    }
+  ], function(err) {
+    if(err) {
+      return callback(err);
+    }
+    callback(null, data);
+  });
+}
+
+function processAll(data, type, cache, cmd, callback) {
   async.waterfall([
     function(callback) {
       if(!type) {
-        return callback(null, data);
+        return callback(new Error({
+          message: 'No type given.',
+          type: 'payswarm.InfoTool.InvalidType'
+        }));
       }
       var frames = payswarm.FRAMES;
       if(!(type in frames)) {
@@ -180,56 +312,40 @@ function processType(data, type, cmd, callback) {
         base: cmd.base
       };
       if(cmd.verbose) {
-        console.log('Frame[%s]:\n%s',
-          type || '*', JSON.stringify(frame, null, 2));
+        console.log('\n= Frame');
+        console.log('== type: %s', type);
+        console.log('%s', JSON.stringify(frame, null, 2));
       }
       jsonld.frame(data, frame, opts, function(err, framed) {
         if(err) {
           return callback(err);
         }
-        if(cmd.framed) {
-          console.log('Framed[%s]:\n%s',
-            type || '*', JSON.stringify(framed, null, 2));
-        }
         callback(null, framed);
       });
     },
-    function(data, callback) {
-      if(cmd.hash) {
-        return payswarm.hash(data, function(err, hash) {
-          if(err) {
-            // FIXME: better handling of empty hash
-            console.log('Hash[%s]:\n[no data or error]', type || '*');
-            return callback(null, data);
-            //return callback(err);
-          }
-          console.log('Hash[%s]:\n%s', type || '*', hash);
-          callback(null, data);
-        });
+    function(framed, callback) {
+      var graphs = framed['@graph'];
+      if(graphs.length === 0 && cmd.verbose) {
+        console.log('\nNo objects of type \"%s\" found.', type);
+        return callback(null);
       }
-      callback(null, data);
-    },
-    function(data, callback) {
-      if(cmd.normalized) {
-        var opts = {
-          base: cmd.base,
-          format: 'application/nquads'
-        };
-        return jsonld.normalize(data, opts, function(err, normalized) {
-          if(err) {
-            return callback(err);
-          }
-          console.log('Normalized[%s]:\n%s', type || '*', normalized.trim());
-          callback(null, data);
-        });
-      }
-      callback(null);
+      async.eachSeries(graphs, function(graph, callback) {
+        // use main context
+        graph['@context'] = framed['@context'];
+        if(cmd.framed) {
+          console.log('\n= Framed');
+          console.log('== type: %s', type || '[none]');
+          console.log('== id: %s', graph.id || '[none]');
+          console.log('%s', JSON.stringify(graph, null, 2));
+        }
+        processOne(graph, type, cache, cmd, callback);
+      }, callback);
     }
   ], function(err) {
     if(err) {
       return callback(err);
     }
-    callback(null, data);
+    callback(null);
   });
 }
 
