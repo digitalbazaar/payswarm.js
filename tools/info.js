@@ -200,14 +200,11 @@ function info(loc, cmd) {
         }
       };
 
-      // check type
+      // check hashes in each listing
       var listings = cache.resources.Listing || [];
       listings.forEach(function(listing) {
         check(listing, 'Asset', listing.asset, listing.assetHash);
-      });
-      var licenses = cache.resources.Licence || [];
-      licenses.forEach(function(license) {
-        check(licence, 'License', listing.license, listing.licenseHash);
+        check(listing, 'License', listing.license, listing.licenseHash);
       });
 
       // results
