@@ -339,13 +339,15 @@ function boolify(value) {
  * Print an object using common options.
  *
  * @param cmd a commander.js command
- * @param data the object
+ * @param data the object or falsey to skip output
  * @param callback function(err) called when done with any error
  */
 function output(cmd, data, callback) {
-  process.stdout.write(JSON.stringify(data, null, cmd.indent));
-  if(cmd.newline) {
-    process.stdout.write('\n');
+  if(data) {
+    process.stdout.write(JSON.stringify(data, null, cmd.indent));
+    if(cmd.newline) {
+      process.stdout.write('\n');
+    }
   }
   callback(null);
 }
