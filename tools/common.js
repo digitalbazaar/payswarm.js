@@ -217,6 +217,8 @@ function writeConfig(cmd, cfg, options, callback) {
  *
  * @param cmd a commander.js command
  * @param options default options. (optional)
+ *          Set pseudo key _httpSignatureFromConfig to config to auto-set
+ *          keyId and key.
  *
  * @return options for a request
  */
@@ -229,6 +231,15 @@ function requestOptions(cmd, options) {
 
   // FIXME: document followRedirct option
   options.followRedirect = !!options.followRedirect;
+
+  // set httpSignature key and keyId from config
+  if(options._httpSignatureFromConfig) {
+    var cfg = options._httpSignatureFromConfig;
+    delete options._httpSignatureFromConfig;
+    options.httpSignature = options.httpSignature || {};
+    options.httpSignature.keyId = cfg.publicKey.id;
+    options.httpSignature.key = cfg.publicKey.privateKeyPem;
+  }
 
   // FIXME: add noAuth option to skip this
   // if using http signature, add default headers if none specified
@@ -246,7 +257,7 @@ function requestOptions(cmd, options) {
  *
  * @param cmd a commander.js command
  * @param loc the URL to use
- * @param options options for jsonld.request (optional)
+ * @param options options for requestOptions and jsonld.request (optional)
  * @param callback function(err, res, result) called when done with any error,
  *          the response object, and the result
  */

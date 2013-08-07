@@ -104,10 +104,7 @@ function urlAction(_url, cmd) {
         return callback(null, cfg);
       }
       var opts = {
-        httpSignature: {
-          keyId: cfg.publicKey.id,
-          key: cfg.publicKey.privateKeyPem
-        }
+        _httpSignatureFromConfig: cfg
       };
       // default to POST if --data used
       if(cmd.data) {

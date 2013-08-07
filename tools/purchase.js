@@ -167,10 +167,7 @@ function purchase(listing, cmd) {
       // FIXME: add option to not authenticate
       // FIXME: move this into purchase call?
       var requestOptions = common.requestOptions(cmd, {
-        httpSignature: {
-          keyId: results.config.publicKey.id,
-          key: results.config.publicKey.privateKeyPem
-        }
+        _httpSignatureFromConfig: results.config
       });
       // Step #2: Send a purchase request for the listing
       payswarm.purchase(results.listing, {
