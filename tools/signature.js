@@ -40,7 +40,7 @@ var payswarm = require('..');
 function init(options) {
   var cmd = options.program
     .command('signature')
-    .description('Sign and verify JSON-LD');
+    .description('sign and verify JSON-LD');
   common
     .command
     .init(cmd)
