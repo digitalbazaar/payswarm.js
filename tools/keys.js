@@ -50,8 +50,8 @@ function init(options) {
     .command
     .init(cmd)
     .option('    --id <id>', 'id to use [access key owner]')
-    .option('-l, --list', 'list keys [true]')
-    .option('-r, --register', 'register new key [false]')
+    .option('-l, --list', 'list keys [default]')
+    .option('-r, --register', 'register new key')
     .option('    --overwrite', 'overwrite config file with new key [false]')
     .action(keys);
 }
