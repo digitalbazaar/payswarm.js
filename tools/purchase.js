@@ -46,6 +46,7 @@ function init(options) {
   common
     .command
     .init(cmd)
+    .option('    --identity <identity>', 'buyer identity [access key owner]')
     .option('    --source <account_url>',
       'URL for the financial account to use when purchasing.')
     .action(purchase)
@@ -55,7 +56,7 @@ function init(options) {
       console.log();
       console.log('  This tool will perform purchase on your behalf on a');
       console.log('  PaySwarm Authority using a real account. Under most');
-      console.log('  circumstances, these purchases are made with legally');
+      console.log('  circumstances these purchases are made with legally');
       console.log('  binding contracts.');
       console.log();
     });
@@ -72,15 +73,17 @@ function purchase(listing, cmd) {
     config: function(callback) {
       common.config.read(cmd, callback);
     },
-    init: ['config', function(callback, results) {
-      // check for source override
-      if(cmd.source) {
-        results.config.source = cmd.source;
+    identity: ['config', function(callback, results) {
+      // default id to key owner from config
+      var identity = cmd.identity || results.config.owner;
+
+      if(!identity) {
+        return callback(new Error('No id or key owner found.'));
       }
 
-      callback(null);
+      callback(null, identity);
     }],
-    listingUrl: ['init', function(callback, results) {
+    listingUrl: function(callback, results) {
       if(listing) {
         return callback(null, listing);
       }
@@ -90,7 +93,10 @@ function purchase(listing, cmd) {
       prompt.get({
         properties: {
           listing: {
-            description: 'Enter the URL of the listing you want to purchase'
+            description: 'Enter the URL of the listing you want to purchase',
+            type: 'string',
+            format: 'url',
+            required: true
           }
         }
       }, function(err, results) {
@@ -99,37 +105,61 @@ function purchase(listing, cmd) {
         }
         callback(null, results.listing);
       });
-    }],
-    source: ['listing', function(callback, results) {
-      if(results.config.source) {
-        return callback(null, results.config.source);
-      }
-
-      // get the source financial account for the purchase if not specified
-      prompt.start();
-      prompt.get({
-        properties: {
-          source: {
-            description: 'Financial account URL (source of funds)'
-          }
-        }
-      }, function(err, results) {
-        if(err) {
-          return callback(err);
-        }
-        callback(null, results.source);
-      });
-    }],
+    },
     listing: ['listingUrl', function(callback, results) {
       // Step #1: Retrieve the listing from the Web
       var options = common.requestOptions(cmd);
       options.cache = true;
       payswarm.getJsonLd(results.listingUrl, options, callback);
     }],
+    _source: ['listing', function(callback, results) {
+      var vendorInitiated = (results.identity !== results.config.owner);
+
+      if(!vendorInitiated && cmd.source) {
+        return callback(new Error('Can not use source for vendor purcahses.'));
+      }
+
+      if(vendorInitiated) {
+        return callback(null, null);
+      }
+
+      // select default source
+      var source = (cmd.source ? cmd.source : results.config.source) || '';
+
+      // get the source financial account for the purchase if not specified
+      prompt.start();
+      prompt.get({
+        properties: {
+          source: {
+            description:
+              'Source financial account or none for budget (URL or short name)',
+            type: 'string',
+            format: 'url',
+            default: source,
+            required: false
+          }
+        }
+      }, function(err, results) {
+        if(err) {
+          return callback(err);
+        }
+
+        callback(null, results.source);
+      });
+    }],
+    source: ['_source', function(callback, results) {
+      // handle short names
+      if(results._source) {
+        var source =
+          common.makeId(results.identity + '/accounts', results._source);
+        return callback(null, source);
+      }
+      callback(null, null);
+    }],
     confirm: ['config', 'source', 'listing', function(callback, results) {
       // quick details
       console.log('Listing ID:', results.listingUrl);
-      console.log('Source Account ID:', results.source);
+      console.log('Source Account ID:', results.source || '[none]');
       // FIXME: Get quote and output amount and/or other details
       //console.log('Amount: %s %s',
       //  results.quote.currency, results.quote.amount);
@@ -163,6 +193,7 @@ function purchase(listing, cmd) {
         // skip purchase
         return callback();
       }
+
       // authenticate so we get a full receipt
       // FIXME: add option to not authenticate
       // FIXME: move this into purchase call?
@@ -170,16 +201,20 @@ function purchase(listing, cmd) {
         _httpSignatureFromConfig: results.config
       });
       // Step #2: Send a purchase request for the listing
-      payswarm.purchase(results.listing, {
+      var request = {
         // FIXME: URL should be retrieved via a .well-known/payswarm method
         transactionService: results.config.authority + 'transactions',
-        customer: results.config.owner,
-        source: results.source,
+        identity: cmd.identity ? cmd.identity : results.config.owner,
         publicKey: results.config.publicKey.id,
         privateKeyPem: results.config.publicKey.privateKeyPem,
         verbose: cmd.verbose,
         request: requestOptions
-      }, callback);
+      };
+      // source can be empty to use budgets
+      if(results.source) {
+        request.source = results.source;
+      }
+      payswarm.purchase(results.listing, request, callback);
     }],
     receipt: ['purchase', function(callback, results) {
       var receipt = results.purchase;
