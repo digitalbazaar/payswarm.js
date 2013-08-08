@@ -211,7 +211,7 @@ function _create(cmd, callback) {
 
       callback(null, url);
     }],
-    budgetRequest: ['budget', 'id', function(callback, results) {
+    budgetRequest: ['budget', 'identity', function(callback, results) {
       var budget = results.budget;
       var props = [];
       if(!budget.label) {
@@ -264,7 +264,7 @@ function _create(cmd, callback) {
       }
 
       prompt.start();
-      prompt.addProperties(budget, props, function(err, results) {
+      prompt.addProperties(budget, props, function(err, budget) {
         if(err) {
           return callback(err);
         }
