@@ -49,7 +49,7 @@ function init(options) {
   common
     .command
     .init(cmd)
-    .option('    --id <id>', 'id to use [access key owner]')
+    .option('    --identity <identity>', 'identity to use [access key owner]')
     .option('-l, --list', 'list keys [default]')
     .option('-r, --register', 'register new key')
     .option('    --overwrite', 'overwrite config file with new key [false]')
@@ -105,14 +105,14 @@ function list(cmd, key, callback) {
       common.config.read(cmd, callback);
     },
     function(cfg, callback) {
-      // default id to key owner from config
-      cmd.id = cmd.id || cfg.owner;
+      // default identity to key owner from config
+      cmd.identity = cmd.identity || cfg.owner;
 
-      if(!cmd.id) {
+      if(!cmd.identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      var url = common.makeId(cmd.id + '/keys', key);
+      var url = common.makeId(cmd.identity + '/keys', key);
       // FIXME: check cross authority id
 
       common.request(cmd, url, callback);

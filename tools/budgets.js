@@ -49,7 +49,7 @@ function init(options) {
   common
     .command
     .init(cmd)
-    .option('    --id <id>', 'id to use [access key owner]')
+    .option('    --identity <identity>', 'identity to use [access key owner]')
     .option('-l, --list', 'list budgets [default]')
     .option('    --create', 'create new budget')
     .option('    --delete', 'delete budget')
@@ -149,13 +149,13 @@ function _list(cmd, budget, callback) {
     },
     function(cfg, callback) {
       // default id to key owner from config
-      cmd.id = cmd.id || cfg.owner;
+      cmd.identity = cmd.identity || cfg.owner;
 
-      if(!cmd.id) {
+      if(!cmd.identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      var url = common.makeId(cmd.id + '/budgets', budget);
+      var url = common.makeId(cmd.identity + '/budgets', budget);
       // FIXME: check cross authority id
 
       var requestOptions = {
@@ -197,16 +197,16 @@ function _create(cmd, callback) {
     },
     id: ['config', function(callback, results) {
       // default id to key owner from config
-      cmd.id = cmd.id || results.config.owner;
+      cmd.identity = cmd.identity || results.config.owner;
 
-      if(!cmd.id) {
+      if(!cmd.identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      callback(null, cmd.id);
+      callback(null, cmd.identity);
     }],
     url: ['id', function(callback, results) {
-      var url = common.makeId(cmd.id + '/budgets');
+      var url = common.makeId(cmd.identity + '/budgets');
       // FIXME: check cross authority id
 
       callback(null, url);
@@ -282,7 +282,8 @@ function _create(cmd, callback) {
         });
 
         // FIXME: this should work in a 'before' prompt option
-        budget.source = common.makeId(cmd.id + '/accounts', budget.source);
+        budget.source =
+          common.makeId(cmd.identity + '/accounts', budget.source);
 
         callback(null, budget);
       });
@@ -322,13 +323,13 @@ function _delete(cmd, budget, callback) {
     },
     function(cfg, callback) {
       // default id to key owner from config
-      cmd.id = cmd.id || cfg.owner;
+      cmd.identity = cmd.identity || cfg.owner;
 
-      if(!cmd.id) {
+      if(!cmd.identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      var url = common.makeId(cmd.id + '/budgets', budget);
+      var url = common.makeId(cmd.identity + '/budgets', budget);
       // FIXME: check cross authority id
 
       var requestOptions = {
@@ -354,13 +355,13 @@ function _update(cmd, budget, callback) {
     },
     url: ['config', function(callback, results) {
       // default id to key owner from config
-      cmd.id = cmd.id || results.config.owner;
+      cmd.identity = cmd.identity || results.config.owner;
 
-      if(!cmd.id) {
+      if(!cmd.identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      var url = common.makeId(cmd.id + '/budgets', budget);
+      var url = common.makeId(cmd.identity + '/budgets', budget);
       // FIXME: check cross authority id
 
       callback(null, url);
@@ -436,13 +437,13 @@ function _vendors(cmd, budget, callback) {
     },
     function(cfg, callback) {
       // default id to key owner from config
-      cmd.id = cmd.id || cfg.owner;
+      cmd.identity = cmd.identity || cfg.owner;
 
-      if(!cmd.id) {
+      if(!cmd.identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      var url = common.makeId(cmd.id + '/budgets', budget);
+      var url = common.makeId(cmd.identity + '/budgets', budget);
       // FIXME: check cross authority id
 
       var requestOptions = {
