@@ -33,14 +33,10 @@
 
 'use strict';
 
-var URL = require('url');
 var async = require('async');
 var common = require('./common');
-var fs = require('fs');
-var jsonld = require('./jsonld');
 var payswarm = require('..');
 var prompt = require('prompt');
-var util = require('util');
 
 function init(options) {
   var cmd = options.program
