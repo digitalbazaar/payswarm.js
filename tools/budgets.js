@@ -195,18 +195,18 @@ function _create(cmd, callback) {
       };
       callback(null, budget);
     },
-    id: ['config', function(callback, results) {
+    identity: ['config', function(callback, results) {
       // default id to key owner from config
-      cmd.identity = cmd.identity || results.config.owner;
+      var identity = cmd.identity || results.config.owner;
 
-      if(!cmd.identity) {
+      if(!identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      callback(null, cmd.identity);
+      callback(null, identity);
     }],
-    url: ['id', function(callback, results) {
-      var url = common.makeId(cmd.identity + '/budgets');
+    url: ['identity', function(callback, results) {
+      var url = common.makeId(results.identity + '/budgets');
       // FIXME: check cross authority id
 
       callback(null, url);
@@ -281,9 +281,8 @@ function _create(cmd, callback) {
           }
         });
 
-        // FIXME: this should work in a 'before' prompt option
         budget.source =
-          common.makeId(cmd.identity + '/accounts', budget.source);
+          common.makeId(results.identity + '/accounts', budget.source);
 
         callback(null, budget);
       });
@@ -353,15 +352,18 @@ function _update(cmd, budget, callback) {
     config: function(callback) {
       common.config.read(cmd, callback);
     },
-    url: ['config', function(callback, results) {
+    identity: ['config', function(callback, results) {
       // default id to key owner from config
-      cmd.identity = cmd.identity || results.config.owner;
+      var identity = cmd.identity || results.config.owner;
 
-      if(!cmd.identity) {
+      if(!identity) {
         return callback(new Error('No id or key owner found.'));
       }
 
-      var url = common.makeId(cmd.identity + '/budgets', budget);
+      callback(null, identity);
+    }],
+    url: ['config', 'identity', function(callback, results) {
+      var url = common.makeId(results.identity + '/budgets', budget);
       // FIXME: check cross authority id
 
       callback(null, url);
