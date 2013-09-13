@@ -101,6 +101,8 @@ function init(cmd) {
     .option('-i, --indent <spaces>', 'spaces to indent [2]', Number, 2)
     .option('-N, --no-newline', 'do not output the trailing newline [newline]')
     .option('-k, --insecure', 'allow insecure SSL connections [false]')
+    .option('    --max-redirs <redirs>',
+      'maximum number of redirects [10]', Number, 10)
     .on('--help', function() {
       console.log();
       console.log(
@@ -230,7 +232,20 @@ function requestOptions(cmd, options) {
   }
 
   // FIXME: document followRedirct option
-  options.followRedirect = !!options.followRedirect;
+  if(!('followRedirect' in options)) {
+    options.followRedirect = true;
+  }
+
+  // FIXME: document maxRedirects option
+  if(!('maxRedirects' in options)) {
+    // Handle "--max-redirs 0" as followRedirect = false
+    if(cmd.maxRedirs === 0) {
+      options.followRedirect = false;
+    }
+    else {
+      options.followRedirect = cmd.maxRedirs;
+    }
+  }
 
   // set httpSignature key and keyId from config
   if(options._httpSignatureFromConfig) {
