@@ -47,9 +47,9 @@ function init(options) {
     .option('    --nonce <nonce>', 'nonce to use when signing')
     .option('    --created <created>', 'W3C date to use when signing')
     .option('    --sign <data>',
-      'Sign JSON-LD string, @file for file, @- for stdin')
+      'Sign URL, JSON-LD string, @file for file, @- for stdin')
     .option('    --verify <data>',
-      'Verify JSON-LD string, @file for file, @- for stdin')
+      'Verify URL, JSON-LD string, @file for file, @- for stdin')
     .action(signature)
     .on('--help', function() {
       console.log();
@@ -66,7 +66,14 @@ function signature(cmd) {
     },
     signData: ['cfg', function(callback, results) {
       if(cmd.sign) {
-        if(cmd.sign.length > 0 && cmd.sign[0] === '@') {
+        if(cmd.sign.length === 0) {
+          return callback(new Error({
+            message: 'No data given.',
+            type: 'payswarm.SignatureTool.InvalidData'
+          }));
+        }
+        if(cmd.sign.indexOf('@') === 0) {
+          // get data from a file
           // FIXME: handle non-JSON-LD data
           payswarm.getJsonLd(cmd.sign.slice(1), function(err, data) {
             if(err) {
@@ -76,7 +83,23 @@ function signature(cmd) {
           });
           return;
         }
+        else if(cmd.sign.indexOf('http://') === 0 ||
+          cmd.sign.indexOf('https://') === 0) {
+          // get data from URL
+          // FIXME: handle non-JSON-LD data
+          var options = {
+            request: common.requestOptions(cmd)
+          };
+          payswarm.getJsonLd(cmd.sign, options, function(err, data) {
+            if(err) {
+              return callback(err);
+            }
+            callback(null, data);
+          });
+          return;
+        }
         else {
+          // parse raw data
           return callback(null, JSON.parse(cmd.sign));
         }
       }
@@ -106,7 +129,14 @@ function signature(cmd) {
     }],
     verifyData: ['cfg', 'sign', function(callback, results) {
       if(cmd.verify) {
-        if(cmd.verify.length > 0 && cmd.verify[0] === '@') {
+        if(cmd.verify.length === 0) {
+          return callback(new Error({
+            message: 'No data given.',
+            type: 'payswarm.SignatureTool.InvalidData'
+          }));
+        }
+        if(cmd.verify.indexOf('@') === 0) {
+          // get data from a file
           // FIXME: handle non-JSON-LD data
           payswarm.getJsonLd(cmd.verify.slice(1), function(err, data) {
             if(err) {
@@ -116,7 +146,23 @@ function signature(cmd) {
           });
           return;
         }
+        else if(cmd.verify.indexOf('http://') === 0 ||
+          cmd.verify.indexOf('https://') === 0) {
+          // get data from URL
+          // FIXME: handle non-JSON-LD data
+          var options = {
+            request: common.requestOptions(cmd)
+          };
+          payswarm.getJsonLd(cmd.verify, options, function(err, data) {
+            if(err) {
+              return callback(err);
+            }
+            callback(null, data);
+          });
+          return;
+        }
         else {
+          // parse raw data
           return callback(null, JSON.parse(cmd.verify));
         }
       }
