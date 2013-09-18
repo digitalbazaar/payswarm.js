@@ -152,12 +152,33 @@ function readConfig(cmd, options, callback) {
             };
           }
         }
-        callback(err, res, cfg);
+        if(!err && !cfg) {
+          err = new Error('Invalid config file: ' + cmd.config);
+        }
+        callback(err, cfg);
       });
     },
-    function(res, cfg, callback) {
+    function(cfg, callback) {
       cfg.authority = cmd.authority || cfg.authority || DEFAULT_AUTHORITY;
-      callback(null, cfg);
+      // load context map
+      if(cfg.contextMap) {
+        async.each(Object.keys(cfg.contextMap), function(key, callback) {
+          var value = cfg.contextMap[key];
+          if(typeof value === 'object') {
+            payswarm.CONTEXTS[key] = value;
+            callback(null);
+          }
+          else {
+            request(cmd, value, function(err, res, context) {
+              payswarm.CONTEXTS[key] = context;
+              callback(err);
+            });
+          }
+        }, callback);
+      }
+      else {
+        callback(null, cfg);
+      }
     }
   ], function(err, cfg) {
     if(err) {
