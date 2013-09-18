@@ -125,6 +125,7 @@ function signature(cmd) {
     verify: ['verifyData', function(callback, results) {
       if(results.verifyData) {
         var options = {
+          checkTimestamp: false,
           request: common.requestOptions(cmd)
         };
         return payswarm.verify(results.verifyData, options, function(err) {
