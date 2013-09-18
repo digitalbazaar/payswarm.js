@@ -108,8 +108,10 @@ function purchase(listing, cmd) {
     },
     listing: ['listingUrl', function(callback, results) {
       // Step #1: Retrieve the listing from the Web
-      var options = common.requestOptions(cmd);
-      options.cache = true;
+      var options = {
+        cache: true,
+        request: common.requestOptions(cmd)
+      };
       payswarm.getJsonLd(results.listingUrl, options, callback);
     }],
     _source: ['listing', function(callback, results) {
