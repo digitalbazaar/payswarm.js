@@ -31,7 +31,7 @@
   },
   "dependencies": {
     "async": "~0.2.6",
-    "jsonld": "=0.0.64",
+    "jsonld": "~0.1.17",
     "mkdirp": "~0.3.5",
     "pkginfo": "~0.3.0",
     "ursa": "~0.8.0"
