@@ -102,7 +102,8 @@ keyRegistration.run = function() {
     function(callback) {
       // Step #2: Fetch the Web Keys endpoint from the PaySwarm Authority.
       var webKeysUrl = URL.parse(payswarmAuthority, true, true);
-      payswarm.getWebKeysConfig(webKeysUrl.host, callback);
+      payswarm.getWellKnownConfig(
+        webKeysUrl.host, {service: 'web-keys'}, callback);
     },
     function(endpoints, callback) {
       // Step #3: Generate the key registration URL
