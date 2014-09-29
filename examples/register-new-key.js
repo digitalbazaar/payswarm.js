@@ -1,9 +1,10 @@
 /**
- * Example of how to create and register a new public/private keypair.
+ * Example of how to create and register a new public/private key pair.
  *
  * @author Manu Sporny
+ * @author Dave Longley
  *
- * Copyright (c) 2011-2013, Digital Bazaar, Inc.
+ * Copyright (c) 2011-2014, Digital Bazaar, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,130 +35,18 @@
  */
 var async = require('async');
 var payswarm = require('../lib/payswarm-client.js');
-var pkginfo = require('pkginfo')(module, 'version');
 var prompt = require('prompt');
 var program = require('commander');
 var URL = require('url');
 
-var keyRegistration = {};
-
-keyRegistration.run = function() {
-  program.version(module.exports.version)
-    // setup the command line options
-    .option('-c, --config <config>',
-      'The PaySwarm configuration file [~/.config/payswarm1/default]')
-    .option('-a, --authority <authority>',
-      'The base URL for the PaySwarm Authority [https://dev.payswarm.com/]')
-    .parse(process.argv);
-
-  // initialize settings
-  var configName = program.config || null;
-  var cfg = {};
-  var payswarmAuthority = program.authority || 'https://dev.payswarm.com/';
-
-  /*
-   * To register a key, the following steps must be performed:
-   *
-   * 1. Generate a public/private keypair (or use an existing one).
-   * 2. Fetch the Web Keys registration endpoint from the PaySwarm Authority.
-   * 3. Generate the key registration URL and go to it in a browser.
-   * 4. Get the new key information and provide it to the program.
-   */
-  async.waterfall([
-    function(callback) {
-      payswarm.getConfigFilename(configName, callback);
-    },
-    function(configFilename, callback) {
-      // read the config file from disk
-      console.log('Reading config from: "' + configFilename + '"...');
-      payswarm.readConfig(configName, function(err, psCfg) {
-        if(err) {
-          // TODO: ensure config file can be written to before continuing
-          console.log(err);
-        }
-        callback(null, psCfg);
-      });
-    },
-    function(newCfg, callback) {
-      cfg = newCfg;
-      // Step #1: Generate a public/private keypair (or use an existing one).
-      if(!('publicKey' in cfg)) {
-        console.log('Generating new public/private keypair...');
-        payswarm.createKeyPair(function(err, pair) {
-          // update the configuration object with the new key info
-          cfg.publicKey = {};
-          cfg.publicKey.publicKeyPem = pair.publicKey;
-          cfg.publicKey.privateKeyPem = pair.privateKey;
-          payswarm.writeConfig(configName, cfg, function(err, configFilename) {
-            if(err) {
-              return console.log(err);
-            }
-            callback();
-          });
-        });
-      } else {
-        callback(null);
-      }
-    },
-    function(callback) {
-      // Step #2: Fetch the Web Keys endpoint from the PaySwarm Authority.
-      var webKeysUrl = URL.parse(payswarmAuthority, true, true);
-      payswarm.getWellKnownConfig(
-        webKeysUrl.host, {service: 'web-keys'}, callback);
-    },
-    function(endpoints, callback) {
-      // Step #3: Generate the key registration URL
-      var responseNonce = new Date().getTime().toString(16);
-      var registrationUrl = URL.parse(endpoints.publicKeyService, true, true);
-      registrationUrl.query['public-key'] = cfg.publicKey.publicKeyPem;
-      registrationUrl.query['response-nonce'] = responseNonce;
-      delete registrationUrl.search;
-      registrationUrl = URL.format(registrationUrl);
-      console.log(
-        '\nTo register your new key, go to this URL using a Web browser:\n\n' +
-        registrationUrl + '\n');
-
-      // read the encrypted message from the command line
-      prompt.start();
-      prompt.get({
-        properties : {
-          data : {
-            description : 'Then, enter the encrypted registration message',
-            require : true,
-          }
-        }
-      }, callback);
-    },
-    function(message, callback) {
-      var encryptedMessage = JSON.parse(message.data);
-      payswarm.decrypt(encryptedMessage, {
-        privateKey : cfg.publicKey.privateKeyPem
-      }, callback);
-    },
-    function(message, callback) {
-      // Step #4: Get the new key information
-      cfg.publicKey.id = message.publicKey;
-      cfg.owner = message.owner;
-      cfg.source = message.destination;
-      callback();
-    },
-    function(callback) {
-      payswarm.writeConfig(configName, cfg, function(err, configFilename) {
-        callback(err, configFilename, cfg);
-      });
-    },
-    function(configFilename, cfg, callback) {
-      console.log('Completed registration of new public key:');
-      console.log('   Public Key Owner :', cfg.owner);
-      console.log('   Financial Account:', cfg.source);
-      console.log('   Public Key URL   :', cfg.publicKey.id);
-      console.log('Config written to: "' + configFilename + '"');
-    }], function(err) {
-    if(err) {
-      console.log('[register-new-key] failed to register key:\n', err.stack);
-    }
-  });
-};
+program.version(module.exports.version)
+  // setup the command line options
+  .option('-c, --config <config>',
+    'The PaySwarm configuration file [~/.config/payswarm1/default]')
+  .option('-s, --web-keys-service <web-keys-service>',
+    'The base URL for the Web Keys Service ' +
+    '[https://dev.payswarm.com/]')
+  .parse(process.argv);
 
 process.on('uncaughtException', function(err) {
   // log uncaught exception and exit
@@ -166,5 +55,117 @@ process.on('uncaughtException', function(err) {
   process.exit();
 });
 
-// run the program
-keyRegistration.run();
+// initialize settings
+var configName = program.config || null;
+var cfg = {};
+var wks = program.webKeysService || 'https://dev.payswarm.com/';
+
+/*
+ * To register a key, the following steps must be performed:
+ *
+ * 1. Generate a public/private key pair (or use an existing one).
+ * 2. Fetch the Web Keys config from the Web Keys Service.
+ * 3. Generate the key registration URL and go to it in a browser.
+ * 4. Get the new key information and provide it to the program.
+ */
+async.auto({
+  getConfig: function(callback) {
+    payswarm.getConfigFilename(configName, function(err, filename) {
+      if(err) {
+        return callback(err);
+      }
+      // read the config file from disk
+      console.log('Reading config from: "' + filename + '"...');
+      payswarm.readConfig(configName, function(err, config) {
+        if(err) {
+          // TODO: ensure config file can be written to before continuing
+          console.log(err);
+        }
+        callback(null, config);
+      });
+    });
+  },
+  readKey: ['getConfig', function(callback, results) {
+    var config = results.getConfig;
+    // Step #1: Generate a public/private key pair (or use an existing one).
+    if(config.publicKey) {
+      return callback();
+    }
+
+    console.log('Generating new public/private key pair...');
+    payswarm.createKeyPair(function(err, pair) {
+      if(err) {
+        return callback(err);
+      }
+      // update config with new key info
+      config.publicKey = {
+        publicKeyPem: pair.publicKey,
+        privateKey: {
+          privateKeyPem: pair.privateKey
+        }
+      };
+      payswarm.writeConfig(configName, config, function(err) {
+        if(err) {
+          console.log(err);
+          process.exit();
+        }
+        callback();
+      });
+    });
+  }],
+  getWebKeysConfig: function(callback) {
+    // Step #2: Fetch the Web Keys config from the Web Keys Service.
+    var url = URL.parse(wks, true, true);
+    payswarm.getWellKnownConfig(url.host, {service: 'web-keys'}, callback);
+  },
+  getUrl: ['readKey', 'getWebKeysConfig', function(callback, results) {
+    // Step #3: Generate the key registration URL
+    var responseNonce = Date.now().toString(16);
+    var registrationUrl = URL.parse(
+      results.getWebKeysConfig.publicKeyService, true, true);
+    registrationUrl.query['public-key'] = cfg.publicKey.publicKeyPem;
+    registrationUrl.query['response-nonce'] = responseNonce;
+    delete registrationUrl.search;
+    registrationUrl = URL.format(registrationUrl);
+    console.log(
+      '\nTo register your new key, go to this URL using a Web browser:\n\n' +
+      registrationUrl + '\n');
+
+    // read the encrypted message from the command line
+    prompt.start();
+    prompt.get({
+      properties: {
+        data: {
+          description: 'Then, enter the encrypted registration message',
+          require: true,
+        }
+      }
+    }, callback);
+  }],
+  decrypt: ['getUrl', function(callback, results) {
+    var encryptedMessage = JSON.parse(results.getUrl.data);
+    payswarm.decrypt(encryptedMessage, {
+      privateKey: cfg.publicKey.privateKey.privateKeyPem
+    }, callback);
+  }],
+  updateKey: ['decrypt', function(callback, results) {
+    // Step #4: Get the new key information
+    var config = results.getConfig;
+    config.publicKey.id = results.decrypt.publicKey;
+    config.owner = results.decrypt.owner;
+    config.source = results.decrypt.destination;
+    payswarm.writeConfig(configName, config, callback);
+  }],
+}, function(err, results) {
+  if(err) {
+    console.log('[register-new-key] failed to register key:\n', err.stack);
+    return;
+  }
+  var config = results.getConfig;
+  var filename = results.updateKey;
+  console.log('Completed registration of new public key:');
+  console.log('   Public Key Owner :', config.owner);
+  console.log('   Financial Account:', config.source);
+  console.log('   Public Key URL   :', config.publicKey.id);
+  console.log('Config written to: "' + filename + '"');
+});
